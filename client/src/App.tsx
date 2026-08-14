@@ -14,6 +14,15 @@ export default function App() {
     //   - success: store categories and show Online + the list, or
     //   - error: show Offline + a useful message.
     setState("loading");
+
+    const result = await checkSystem();
+
+    if (result.online) {
+      setCategories(result.categories);
+      setState("success");
+    } else {
+      setState("error");
+    }
   }
 
   return (
@@ -26,6 +35,18 @@ export default function App() {
         {state === "loading" ? "Loading…" : "Check System"}
       </button>
 
+      {
+        state != "loading" && (state === "success" ? (
+          <div className="alert alert-success mt-4">
+            <h2 className="h5 bold">Online</h2>
+          </div>
+        ) : state === "error" ? (
+          <div className="alert alert-danger mt-4">
+            <h2 className="h5">Offline</h2>
+            <p>The system is currently offline.</p>
+          </div>
+        ) : null)
+      }
       {/* TODO(Issue 4): render loading / success (Online + categories) / error (Offline) states. */}
     </div>
   );
