@@ -1,26 +1,20 @@
 import { useState } from "react";
 import { checkSystem, Category } from "./api.js";
 
-// UI states you must handle for Issue 4: idle, loading, success, error.
 type UiState = "idle" | "loading" | "success" | "error";
 
 export default function App() {
   const [state, setState] = useState<UiState>("idle");
   const [categories, setCategories] = useState<Category[]>([]);
-  void categories;
 
   async function handleCheck() {
-    // TODO(Issue 4): set loading, call checkSystem(), then either
-    //   - success: store categories and show Online + the list, or
-    //   - error: show Offline + a useful message.
     setState("loading");
 
-    const result = await checkSystem();
-
-    if (result.online) {
+    try {
+      const result = await checkSystem();
       setCategories(result.categories);
       setState("success");
-    } else {
+    } catch {
       setState("error");
     }
   }
@@ -35,19 +29,29 @@ export default function App() {
         {state === "loading" ? "Loading…" : "Check System"}
       </button>
 
-      {
-        state != "loading" && (state === "success" ? (
-          <div className="alert alert-success mt-4">
-            <h2 className="h5 bold">Online</h2>
-          </div>
-        ) : state === "error" ? (
-          <div className="alert alert-danger mt-4">
-            <h2 className="h5">Offline</h2>
-            <p>The system is currently offline.</p>
-          </div>
-        ) : null)
-      }
-      {/* TODO(Issue 4): render loading / success (Online + categories) / error (Offline) states. */}
+      {state === "loading" && (
+        <div className="alert alert-info mt-4">
+          <p className="mb-0">Checking system status…</p>
+        </div>
+      )}
+
+      {state === "success" && (
+        <div className="alert alert-success mt-4">
+          <h2 className="h5 mb-3">Online</h2>
+          <ul className="mb-0">
+            {categories.map((category) => (
+              <li key={category.id}>{category.name}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {state === "error" && (
+        <div className="alert alert-danger mt-4">
+          <h2 className="h5">Offline</h2>
+          <p className="mb-0">The system is currently offline.</p>
+        </div>
+      )}
     </div>
   );
 }
