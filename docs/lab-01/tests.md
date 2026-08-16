@@ -1,40 +1,46 @@
-# Lab 1 — Test Plan and Evidence  (fill this in)
+# Lab 1 — Test Plan and Evidence
 
 All test files live under server/tests/lab-01/ and client/tests/lab-01/.
 
 | # | Tool | Test | Result |
 |---|------|------|--------|
-| 1 | Supertest | GET /api/health returns 200, status=ok |{
-  "status": "ok",
-  "service": "TokTickIT API"
-} |
-| 2 | Supertest | GET /api/categories returns 4 seeded categories in id order | |
-| 3 | Vitest | Heading renders | |
-| 4 | Vitest | Success state shows Online + category list | |
-| 5 | Vitest | Error state shows Offline + message | |
+| 1 | Supertest | GET /api/health returns 200, status=ok | Passed |
+| 2 | Supertest | GET /api/categories returns 4 seeded categories in id order | Passed |
+| 3 | Vitest | Heading renders | Passed |
+| 4 | Vitest | Success state shows Online + category list | Passed |
+| 5 | Vitest | Error state shows Offline + message | Passed |
 
 Paste your passing terminal output / screenshot below.
 
- RUN  v2.1.9 D:/CPE334/toktickit/client
+![alt text](image.png)
+![alt text](<ภาพหน้าจอ (222).png>)
+![alt text](<ภาพหน้าจอ (226).png>)
+![alt text](<ภาพหน้าจอ (223).png>)
+![alt text](<ภาพหน้าจอ (224).png>)
+
+```text
+RUN  v2.1.9 D:/CPE334/toktickit/server
+
+> toktickit-server@1.0.0 test
+> vitest run
+
+ ✓ tests/lab-01/categories.test.ts (1)
+ ✓ tests/lab-01/health.test.ts (1)
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  14:38:51
+   Duration  2.76s (transform 102ms, setup 0ms, collect 3.07s, tests 106ms, environment 1ms, prepare 1.37s)
+
+RUN  v2.1.9 D:/CPE334/toktickit/client
 
  ✓ tests/lab-01/App.test.tsx (3)
    ✓ App (3)
      ✓ renders the TokTickIT heading
-     ↓ shows Online and the seeded categories on success [skipped]
-     ↓ shows an Offline error message when the API is unavailable [skipped]
+     ✓ shows Online and the seeded categories on success
+     ✓ shows an Offline error message when the API is unavailable
 
  Test Files  1 passed (1)
-      Tests  1 passed | 2 todo (3)
-   Start at  14:45:03
-   Duration  1.59s (transform 45ms, setup 138ms, collect 161ms, tests 21ms, environment 806ms, prepare 174ms)
-
-
- RUN  v2.1.9 D:/CPE334/toktickit/server
-
- ↓ tests/lab-01/categories.test.ts (1) [skipped]
- ✓ tests/lab-01/health.test.ts (1)
-
- Test Files  1 passed | 1 skipped (2)
-      Tests  1 passed | 1 todo (2)
-   Start at  14:47:15
-   Duration  801ms (transform 70ms, setup 0ms, collect 668ms, tests 20ms, environment 0ms, prepare 297ms)
+      Tests  3 passed (3)
+   Start at  00:43:39
+   Duration  1.94s (transform 67ms, setup 164ms, collect 287ms, tests 204ms, environment 822ms, prepare 145ms)
