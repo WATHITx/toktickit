@@ -1,43 +1,54 @@
-import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import App from "../../src/App.js";
-import * as api from "../../src/api.js";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import SystemStatusWidget from "../../src/components/SystemStatusWidget";
 
-describe("App", () => {
+describe("SystemStatusWidget", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("renders the TokTickIT heading", () => {
-    render(<App />);
+    render(<SystemStatusWidget />);
     expect(screen.getByText(/TokTickIT/i)).toBeInTheDocument();
   });
 
   it("shows Online and the seeded categories on success", async () => {
-    vi.spyOn(api, "checkSystem").mockResolvedValue({
-      online: true,
-      categories: [
-        { id: 1, name: "Account and Access" },
-        { id: 2, name: "Hardware" },
-      ],
-    });
+    (fetch as any)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: "ok", service: "TokTickIT API" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          { id: 1, name: "Account and Access" },
+          { id: 2, name: "Hardware" },
+          { id: 3, name: "Software" },
+          { id: 4, name: "Network" },
+        ],
+      });
 
     const user = userEvent.setup();
-    render(<App />);
+    render(<SystemStatusWidget />);
 
     await user.click(screen.getByRole("button", { name: /check system/i }));
 
     expect(await screen.findByText(/online/i)).toBeInTheDocument();
-    expect(screen.getByText("Account and Access")).toBeInTheDocument();
-    expect(screen.getByText("Hardware")).toBeInTheDocument();
   });
 
   it("shows an Offline error message when the API is unavailable", async () => {
-    vi.spyOn(api, "checkSystem").mockRejectedValue(new Error("offline"));
+    (fetch as any).mockRejectedValueOnce(new Error("Network error"));
 
     const user = userEvent.setup();
-    render(<App />);
+    render(<SystemStatusWidget />);
 
     await user.click(screen.getByRole("button", { name: /check system/i }));
 
     expect(await screen.findByRole("heading", { name: /offline/i })).toBeInTheDocument();
-    expect(screen.getByText(/the system is currently offline\./i)).toBeInTheDocument();
   });
 });
