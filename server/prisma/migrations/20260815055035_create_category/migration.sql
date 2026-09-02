@@ -9,3 +9,4 @@ CREATE TABLE "Category" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
+CREATE SEQUENCE ticket_number_seq START 1;

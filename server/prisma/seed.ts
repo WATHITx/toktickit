@@ -35,7 +35,23 @@ for (const r of requesters) {
   });
 }
 console.log(`Seeded ${requesters.length} development requesters.`);
+
+const relatedSystems = [
+  "Email", "Campus Wi-Fi", "VPN", "LEB2 App",
+  "Grade Submission App", "Printer", "Corporate Laptop",
+];
+
+for (const name of relatedSystems) {
+  await prisma.relatedSystem.upsert({
+    where: { name },
+    update: {},
+    create: { name },
+  });
 }
+console.log(`Seeded ${relatedSystems.length} related systems.`);
+}
+
+
 
 main()
   .catch((e) => {
