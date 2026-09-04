@@ -3,6 +3,7 @@ import cors from "cors";
 import { getPrisma } from "./prisma.js";
 import requestersRouter from "./routes/requesters.js";
 import relatedSystemsRouter from "./routes/relatedSystems.js";
+import attachmentsRouter from "./routes/attachments.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import ticketsRouter from "./routes/tickets.js";
 
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use("/api", requestersRouter);
 app.use("/api", relatedSystemsRouter);
 app.use("/api", ticketsRouter);
+app.use("/api", attachmentsRouter);
 app.use(errorHandler);
 
 // ---------------------------------------------------------------------------
