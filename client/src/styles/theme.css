@@ -1,0 +1,46 @@
+:root {
+  --color-primary: #006B3C;
+  --color-secondary: #0B7A46;
+  --color-pale-green: #EAF6EF;
+  --color-bg: #F5F7F6;
+  --color-surface: #FFFFFF;
+  --color-text: #1F2B24;
+  --color-error: #B3261E;
+  --color-warning: #B8860B;
+
+  /* Override Bootstrap's own variables so btn-primary etc. use Zen Green */
+  --bs-primary: var(--color-primary);
+  --bs-primary-rgb: 0, 107, 60;
+  --bs-body-bg: var(--color-bg);
+  --bs-body-color: var(--color-text);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.btn-primary {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-secondary) !important;
+  border-color: var(--color-secondary) !important;
+}
+
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid #E0E6E2;
+}
+
+.alert-success {
+  background-color: var(--color-pale-green);
+  border-color: var(--color-secondary);
+  color: var(--color-text);
+}
+
+.form-control[readonly] {
+  background-color: #F0EFE8;
+}
