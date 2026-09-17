@@ -64,4 +64,27 @@ describe("TicketDetail", () => {
     expect(screen.getByText(/removed/i)).toBeInTheDocument();
     expect(screen.queryByText("Download")).not.toBeInTheDocument();
   });
+
+  it("shows public comment controls and resolution action for requesters", async () => {
+    (fetch as any)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 1, ticketNumber: "TKT-1", summary: "s", description: "d",
+          category: { name: "Hardware" }, relatedSystem: { name: "Laptop" },
+          requestedPriority: "LOW", currentStatus: "NEW", problemAppearsResolved: false,
+          createdAt: new Date().toISOString(), requesterId: 1, attachments: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      });
+
+    renderPage();
+
+    await waitFor(() => screen.getByText("Public Comments"));
+    expect(screen.getByRole("button", { name: /mark problem as resolved/i })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/add a comment/i)).toBeInTheDocument();
+  });
 });

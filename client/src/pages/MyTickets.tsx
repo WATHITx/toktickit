@@ -40,7 +40,6 @@ export default function MyTickets() {
     setStatus("loading");
     try {
       const params = new URLSearchParams({
-        requesterId: String(user.id),
         page: String(page),
         pageSize: String(PAGE_SIZE),
         sortBy, sortDir,

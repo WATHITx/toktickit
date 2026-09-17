@@ -63,10 +63,12 @@ model Ticket {
   summary           String
   description       String
   requestedPriority Priority
+  problemAppearsResolved Boolean         @default(false)
   currentStatus     TicketStatus  @default(NEW)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   attachments       Attachment[]
+  comments          PublicComment[]
 
   @@index([requesterId])
   @@index([currentStatus])
@@ -88,6 +90,18 @@ model Attachment {
   @@index([ticketId])
 }
 
+model PublicComment {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
 enum Role {
   REQUESTER
   IT_STAFF
@@ -105,4 +119,5 @@ model User {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   tickets            Ticket[]
+  publicComments     PublicComment[]
 }

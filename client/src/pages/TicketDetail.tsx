@@ -8,11 +8,18 @@ type Attachment = {
   id: number; fileName: string; fileType: string; fileSize: number;
   isRemoved: boolean; removedReason: string | null; createdAt: string;
 };
+type Comment = {
+  id: number;
+  content: string;
+  createdAt: string;
+  author: { name: string; role: string };
+};
+
 type TicketDetailData = {
   id: number; ticketNumber: string; summary: string; description: string;
   category: { name: string }; relatedSystem: { name: string };
-  requestedPriority: string; currentStatus: string; createdAt: string;
-  requesterId: number; attachments: Attachment[];
+  requestedPriority: string; currentStatus: string; problemAppearsResolved: boolean;
+  createdAt: string; requesterId: number; attachments: Attachment[];
 };
 type Status = "loading" | "loaded" | "error" | "forbidden" | "not-found";
 
@@ -22,6 +29,8 @@ export default function TicketDetail() {
   const navigate = useNavigate();
 
   const [ticket, setTicket] = useState<TicketDetailData | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState("");
   const [status, setStatus] = useState<Status>("loading");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -32,7 +41,7 @@ export default function TicketDetail() {
     if (!user || !id) return;
     setStatus("loading");
     try {
-      const data = await apiGet<TicketDetailData>(`/tickets/${id}?requesterId=${user.id}`);
+      const data = await apiGet<TicketDetailData>(`/tickets/${id}`);
       setTicket(data);
       setStatus("loaded");
     } catch (err: any) {
@@ -42,12 +51,47 @@ export default function TicketDetail() {
     }
   }, [user, id]);
 
+  const fetchComments = useCallback(async () => {
+    if (!ticket) return;
+    const data = await apiGet<Comment[]>(`/tickets/${ticket.id}/comments`);
+    setComments(data);
+  }, [ticket]);
+
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
     fetchTicket();
   }, [user, fetchTicket, navigate]);
 
+  useEffect(() => {
+    if (ticket) {
+      fetchComments().catch(() => setComments([]));
+    }
+  }, [ticket, fetchComments]);
+
   if (!user) return null;
+
+  const handlePostComment = async () => {
+    if (!newComment.trim() || !ticket) return;
+    await fetch(`/api/tickets/${ticket.id}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ content: newComment.trim() }),
+    });
+    setNewComment("");
+    await fetchComments();
+  };
+
+  const handleMarkResolved = async () => {
+    if (!ticket) return;
+    await fetch(`/api/tickets/${ticket.id}/mark-resolved`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({}),
+    });
+    await fetchTicket();
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,7 +100,6 @@ export default function TicketDetail() {
     setUploadError(null);
 
     const formData = new FormData();
-    formData.append("requesterId", String(user.id));
     formData.append("file", file);
 
     try {
@@ -86,7 +129,7 @@ export default function TicketDetail() {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ requesterId: user.id, reason: removeReason }),
+        body: JSON.stringify({ reason: removeReason }),
       });
       if (res.ok) {
         setRemovingId(null);
@@ -198,6 +241,44 @@ export default function TicketDetail() {
                 </button>
               </div>
             )}
+          </div>
+
+          <div className="card p-4 mt-3">
+            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <h3 className="mb-0">Public Comments</h3>
+              {ticket.problemAppearsResolved ? (
+                <span className="badge bg-success">Problem appears resolved</span>
+              ) : (
+                <button className="btn btn-outline-secondary btn-sm" onClick={handleMarkResolved}>
+                  Mark problem as resolved
+                </button>
+              )}
+            </div>
+
+            <div className="mt-3">
+              {comments.length === 0 && <p className="text-muted mb-0">No comments yet.</p>}
+              {comments.map((comment) => (
+                <div key={comment.id} className="mb-2 p-2" style={{ backgroundColor: "var(--color-pale-green, #edf7ed)" }}>
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <strong>{comment.author.name}</strong>
+                    <span className="badge bg-secondary">{comment.author.role}</span>
+                  </div>
+                  <p className="mb-0">{comment.content}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="d-flex gap-2 mt-3">
+              <input
+                className="form-control"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+              />
+              <button className="btn btn-primary" onClick={handlePostComment} disabled={!newComment.trim()}>
+                Post
+              </button>
+            </div>
           </div>
         </>
       )}

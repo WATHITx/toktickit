@@ -1,8 +1,9 @@
-import { Router, Request, Response } from "express";
+import { Router, Response } from "express";
 import multer from "multer";
 import path from "path";
 import crypto from "crypto";
 import { getPrisma } from "../prisma.js";
+import { requireAuth, AuthedRequest } from "../middleware/auth.js";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -23,7 +24,7 @@ const upload = multer({
 
 const router = Router();
 
-router.post("/tickets/:id/attachments", (req, res, next) => {
+router.post("/tickets/:id/attachments", requireAuth, (req, res, next) => {
   upload.single("file")(req, res, (err) => {
     if (err) {
       if (err.message === "UNSUPPORTED_TYPE") {
@@ -36,9 +37,9 @@ router.post("/tickets/:id/attachments", (req, res, next) => {
     }
     next();
   });
-}, async (req: Request, res: Response) => {
+}, async (req: AuthedRequest, res: Response) => {
   const ticketId = Number(req.params.id);
-  const requesterId = Number(req.body.requesterId);
+  const requesterId = req.user!.id;
 
   try {
     const prisma = getPrisma();
@@ -68,7 +69,7 @@ router.post("/tickets/:id/attachments", (req, res, next) => {
   }
 });
 
-router.get("/attachments/:id/download", async (req: Request, res: Response) => {
+router.get("/attachments/:id/download", requireAuth, async (req: AuthedRequest, res: Response) => {
   const prisma = getPrisma();
   const attachment = await prisma.attachment.findUnique({ where: { id: Number(req.params.id) } });
   if (!attachment || attachment.isRemoved) {
@@ -77,8 +78,9 @@ router.get("/attachments/:id/download", async (req: Request, res: Response) => {
   res.download(path.join("uploads", attachment.storedName), attachment.fileName);
 });
 
-router.delete("/attachments/:id", async (req: Request, res: Response) => {
-  const { requesterId, reason } = req.body;
+router.delete("/attachments/:id", requireAuth, async (req: AuthedRequest, res: Response) => {
+  const { reason } = req.body;
+  const requesterId = req.user!.id;
   if (!reason || reason.trim().length === 0) {
     return res.status(400).json({ error: "A removal reason is required" });
   }

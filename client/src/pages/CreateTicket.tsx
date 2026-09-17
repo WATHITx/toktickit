@@ -55,7 +55,6 @@ export default function CreateTicket() {
 
     try {
       const result = await apiPost<{ ticketNumber: string }>("/tickets", {
-        requesterId: user.id,
         categoryId: Number(form.categoryId),
         relatedSystemId: Number(form.relatedSystemId),
         summary: form.summary,
