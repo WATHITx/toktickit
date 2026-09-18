@@ -14,7 +14,7 @@ describe("GET /api/tickets", () => {
     const requesters = await prisma.user.findMany({ where: { isActive: true }, orderBy: { id: "asc" }, take: 2 });
     requesterA = requesters[0].id;
     requesterB = requesters[1].id;
-    // สร้าง ticket ให้ requester A 2 ใบ, requester B 1 ใบ
+    // create tickets for requester A and B
     await prisma.ticket.createMany({
       data: [
         { ticketNumber: "TKT-TEST-MYT-A1", requesterId: requesterA, categoryId: category!.id, relatedSystemId: relatedSystem!.id, summary: "A ticket one about printer", description: "d", requestedPriority: "LOW" },
@@ -29,8 +29,13 @@ describe("GET /api/tickets", () => {
     await prisma.ticket.deleteMany({ where: { ticketNumber: { startsWith: "TKT-TEST-MYT-" } } });
   });
 
-  it("returns only tickets owned by the given requesterId (ownership isolation)", async () => {
-    const res = await request(app).get(`/api/tickets?requesterId=${requesterA}&search=TKT-TEST-MYT`);
+  it("returns only tickets owned by the authenticated requester", async () => {
+    const prisma = getPrisma();
+    const user = await prisma.user.findUnique({ where: { id: requesterA } });
+    const agent = request.agent(app);
+    await agent.post("/api/auth/login").send({ email: user!.email, password: "DevPass!123" });
+
+    const res = await agent.get(`/api/tickets?search=TKT-TEST-MYT`);
     expect(res.status).toBe(200);
     const numbers = res.body.data.map((t: any) => t.ticketNumber);
     expect(numbers).toContain("TKT-TEST-MYT-A1");
@@ -39,22 +44,32 @@ describe("GET /api/tickets", () => {
   });
 
   it("filters by search term matching summary", async () => {
-    const res = await request(app).get(`/api/tickets?requesterId=${requesterA}&search=TKT-TEST-MYT-A1`);
+    const prisma = getPrisma();
+    const user = await prisma.user.findUnique({ where: { id: requesterA } });
+    const agent = request.agent(app);
+    await agent.post("/api/auth/login").send({ email: user!.email, password: "DevPass!123" });
+
+    const res = await agent.get(`/api/tickets?search=TKT-TEST-MYT-A1`);
     expect(res.status).toBe(200);
     expect(res.body.data.length).toBe(1);
     expect(res.body.data[0].ticketNumber).toBe("TKT-TEST-MYT-A1");
   });
 
   it("paginates results correctly", async () => {
-    const res = await request(app).get(`/api/tickets?requesterId=${requesterA}&search=TKT-TEST-MYT-A&page=1&pageSize=1`);
+    const prisma = getPrisma();
+    const user = await prisma.user.findUnique({ where: { id: requesterA } });
+    const agent = request.agent(app);
+    await agent.post("/api/auth/login").send({ email: user!.email, password: "DevPass!123" });
+
+    const res = await agent.get(`/api/tickets?search=TKT-TEST-MYT&page=1&pageSize=1`);
     expect(res.status).toBe(200);
     expect(res.body.data.length).toBe(1);
     expect(res.body.pagination.total).toBe(2);
     expect(res.body.pagination.totalPages).toBe(2);
   });
 
-  it("requires requesterId", async () => {
+  it("requires authentication", async () => {
     const res = await request(app).get("/api/tickets");
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(401);
   });
 });

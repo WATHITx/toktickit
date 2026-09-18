@@ -1,5 +1,4 @@
 export type TicketInput = {
-  requesterId?: number;
   categoryId?: number;
   relatedSystemId?: number;
   summary?: string;
@@ -28,7 +27,6 @@ export function validateTicketInput(input: TicketInput): Record<string, string> 
 
   if (!input.categoryId) errors.categoryId = "Category is required";
   if (!input.relatedSystemId) errors.relatedSystemId = "Related system is required";
-  if (!input.requesterId) errors.requesterId = "Requester is required";
 
   return errors;
 }
