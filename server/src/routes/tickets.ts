@@ -103,17 +103,13 @@ router.post("/tickets", requireAuth, requireRole(["REQUESTER"]), async (req: Aut
       const ticketNumber = formatTicketNumber(Number(seqResult[0].nextval));
 
       return tx.ticket.create({
-        data: {
-          ticketNumber,
-          requesterId,
-          categoryId,
-          relatedSystemId,
-          summary: summary.trim(),
-          description: description.trim(),
-          requestedPriority,
-          currentStatus: "NEW",
-        },
-      });
+  data: {
+    ticketNumber, requesterId, categoryId, relatedSystemId,
+    summary: summary.trim(), description: description.trim(),
+    requestedPriority, itPriority: requestedPriority, // ← เพิ่มบรรทัดนี้
+    currentStatus: "NEW",
+  },
+});
     });
 
     res.status(201).json(ticket);

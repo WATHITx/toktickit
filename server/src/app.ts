@@ -6,6 +6,7 @@ import requestersRouter from "./routes/requesters.js";
 import relatedSystemsRouter from "./routes/relatedSystems.js";
 import attachmentsRouter from "./routes/attachments.js";
 import authRouter from "./routes/auth.js";
+import staffTicketsRouter from "./routes/staffTickets.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import ticketsRouter from "./routes/tickets.js";
 
@@ -25,7 +26,9 @@ app.use("/api", requestersRouter);
 app.use("/api", relatedSystemsRouter);
 app.use("/api", ticketsRouter);
 app.use("/api", attachmentsRouter);
+app.use("/api", staffTicketsRouter);
 app.use(errorHandler);
+
 
 // ---------------------------------------------------------------------------
 // Issue 2 — API health check
