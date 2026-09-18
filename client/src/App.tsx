@@ -7,6 +7,7 @@ import CreateTicket from "./pages/CreateTicket";
 import MyTickets from "./pages/MyTickets";
 import TicketDetail from "./pages/TicketDetail";
 import SystemStatusWidget from "./components/SystemStatusWidget";
+import StaffTicketQueue from "./pages/StaffTicketQueue";
 
 function App() {
   return (
@@ -20,6 +21,14 @@ function App() {
           <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
           <Route path="/system-status" element={<SystemStatusWidget />} />
           <Route path="/" element={<Navigate to="/my-tickets" replace />} />
+          <Route
+  path="/my-queue"
+  element={
+    <ProtectedRoute allowedRoles={["IT_STAFF", "ADMINISTRATOR"]}>
+      <StaffTicketQueue />
+    </ProtectedRoute>
+  }
+/>
         </Routes>
       </BrowserRouter>
     </AuthProvider>

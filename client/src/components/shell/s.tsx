@@ -28,6 +28,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
       >
         <span className="text-white fs-4 fw-bold">TokTickIT</span>
 
+        {user && (user.role === "IT_STAFF" || user.role === "ADMINISTRATOR") && (
+  <Link to="/my-queue" className={`text-white text-decoration-none ${isActive("/my-queue") ? "fw-bold border-bottom border-white" : ""}`}>
+    My Queue
+  </Link>
+)}
+{user && user.role === "REQUESTER" && (
+  <>
+    <Link to="/my-tickets" className={`text-white text-decoration-none ${isActive("/my-tickets") ? "fw-bold border-bottom border-white" : ""}`}>My Tickets</Link>
+    <Link to="/create-ticket" className={`text-white text-decoration-none ${isActive("/create-ticket") ? "fw-bold border-bottom border-white" : ""}`}>+ Create Ticket</Link>
+  </>
+)}
+
         {user && (
           <nav className="d-flex gap-3">
             <Link

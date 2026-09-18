@@ -69,6 +69,12 @@ model Ticket {
   updatedAt         DateTime      @updatedAt
   attachments       Attachment[]
   comments          PublicComment[]
+  itPriority    Priority @default(MEDIUM)
+  ticketOwnerId Int?
+  ticketOwner   User?    @relation("TicketOwner", fields: [ticketOwnerId], references: [id])
+
+  @@index([ticketOwnerId])
+  @@index([itPriority])
 
   @@index([requesterId])
   @@index([currentStatus])
@@ -120,4 +126,5 @@ model User {
   updatedAt          DateTime @updatedAt
   tickets            Ticket[]
   publicComments     PublicComment[]
+  ownedTickets Ticket[] @relation("TicketOwner")
 }
