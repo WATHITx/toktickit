@@ -143,12 +143,13 @@ export default function UserManagement() {
           {status === "error" && <p className="text-danger">Unable to load users.</p>}
 
           {status === "loaded" && (
+            <div className="table-responsive">
             <table className="table">
               <thead><tr><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 {users.map((u) => (
                   <tr key={u.id} data-testid="user-row">
-                    <td>{u.name}<div className="text-muted small">{u.email}</div></td>
+                    <td>{u.name}<div className="text-muted small text-break">{u.email}</div></td>
                     <td><span className={`badge ${roleBadgeClass(u.role)}`}>{u.role}</span></td>
                     <td><span className={`badge ${u.isActive ? "bg-success" : "bg-danger"}`}>{u.isActive ? "Active" : "Inactive"}</span></td>
                     <td><button className="btn btn-sm btn-outline-secondary" onClick={() => openEdit(u)}>Edit</button></td>
@@ -156,6 +157,7 @@ export default function UserManagement() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 
