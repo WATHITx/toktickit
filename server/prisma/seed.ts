@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
+const DEV_PASSWORD = "DevPass!123"; // dev-only, documented in README
 
 const categories = [
   "Account and Access",
@@ -9,49 +11,78 @@ const categories = [
   "Network",
 ];
 
-
-
-async function main() {
-  for (const name of categories) {
-    await prisma.category.upsert({
-      where: { name },       // เช็คด้วย unique field
-      update: {},             // ถ้ามีอยู่แล้ว ไม่ต้องอัปเดตอะไร
-      create: { name },       // ถ้ายังไม่มี ค่อย insert
-    });
-  }
-  const requesters = [
-  { name: "Jennifer Anderson", email: "jennifer.a@toktickit.test", isActive: true },
-  { name: "Michael Brown", email: "michael.b@toktickit.test", isActive: true },
-  { name: "Sarah Johnson", email: "sarah.j@toktickit.test", isActive: true },
-  { name: "David Lee", email: "david.l@toktickit.test", isActive: true },
-  { name: "Inactive Test User", email: "inactive.user@toktickit.test", isActive: false },
-];
-
-for (const r of requesters) {
-  await prisma.requesterUser.upsert({
-    where: { email: r.email },
-    update: {},
-    create: r,
-  });
-}
-console.log(`Seeded ${requesters.length} development requesters.`);
-
 const relatedSystems = [
   "Email", "Campus Wi-Fi", "VPN", "LEB2 App",
   "Grade Submission App", "Printer", "Corporate Laptop",
 ];
 
-for (const name of relatedSystems) {
-  await prisma.relatedSystem.upsert({
-    where: { name },
-    update: {},
-    create: { name },
+async function seedUsers() {
+  const hash = await bcrypt.hash(DEV_PASSWORD, 10);
+
+  // mustChangePassword defaults to true (first-login flow). The accounts E2E tests log in with
+  // (jennifer.a, sarah.j, kevin.p, admin) skip it; michael.b stays true for e2e/lab-03/first-login.spec.ts.
+  const users: {
+    name: string; email: string; role: "REQUESTER" | "IT_STAFF" | "ADMINISTRATOR";
+    isActive: boolean; mustChangePassword?: boolean;
+  }[] = [
+    // Requesters
+    { name: "Jennifer Anderson", email: "jennifer.a@toktickit.test", role: "REQUESTER" as const, isActive: true, mustChangePassword: false },
+    { name: "Michael Brown", email: "michael.b@toktickit.test", role: "REQUESTER" as const, isActive: true },
+    { name: "Sarah Johnson", email: "sarah.j@toktickit.test", role: "REQUESTER" as const, isActive: true, mustChangePassword: false },
+    { name: "David Lee", email: "david.l@toktickit.test", role: "REQUESTER" as const, isActive: true },
+    { name: "Inactive Requester", email: "inactive.req@toktickit.test", role: "REQUESTER" as const, isActive: false },
+    // IT Staff
+    { name: "Kevin Patel", email: "kevin.p@toktickit.test", role: "IT_STAFF" as const, isActive: true, mustChangePassword: false },
+    { name: "Emily Davis", email: "emily.d@toktickit.test", role: "IT_STAFF" as const, isActive: true },
+    { name: "Robert Wilson", email: "robert.w@toktickit.test", role: "IT_STAFF" as const, isActive: true },
+    { name: "Inactive Staff", email: "inactive.staff@toktickit.test", role: "IT_STAFF" as const, isActive: false },
+    // Administrator
+    { name: "Admin User", email: "admin@toktickit.test", role: "ADMINISTRATOR" as const, isActive: true, mustChangePassword: false },
+  ];
+
+  const e2eReadyUser = await prisma.user.findUnique({ where: { email: "jennifer.a@toktickit.test" } });
+if (e2eReadyUser) {
+  await prisma.user.update({
+    where: { id: e2eReadyUser.id },
+    data: { mustChangePassword: false },
   });
 }
-console.log(`Seeded ${relatedSystems.length} related systems.`);
+
+  for (const u of users) {
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: {
+        name: u.name,
+        role: u.role,
+        isActive: u.isActive,
+        passwordHash: hash,
+        mustChangePassword: u.mustChangePassword ?? true,
+      },
+      create: { ...u, passwordHash: hash, mustChangePassword: u.mustChangePassword ?? true },
+    });
+  }
+  console.log(`Seeded ${users.length} users (dev password: ${DEV_PASSWORD}).`);
 }
 
+async function main() {
+  for (const name of categories) {
+    await prisma.category.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
 
+  for (const name of relatedSystems) {
+    await prisma.relatedSystem.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
+
+  await seedUsers();
+}
 
 main()
   .catch((e) => {
@@ -61,4 +92,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
 

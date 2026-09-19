@@ -10,14 +10,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model RequesterUser {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  tickets   Ticket[]
-}
+// model RequesterUser {
+// id        Int      @id @default(autoincrement())
+// name      String
+// email     String   @unique
+// isActive  Boolean  @default(true)
+// createdAt DateTime @default(now())
+// tickets   Ticket[]
+// }
 
 // ---------------------------------------------------------------------------
 // Issue 3 — Create and seed IT request categories
@@ -49,13 +49,20 @@ enum Priority {
 
 enum TicketStatus {
   NEW
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_REQUESTER
+  RESOLVED
+  CLOSED
+  REOPENED
+  CANCELLED
 }
 
 model Ticket {
   id                Int           @id @default(autoincrement())
   ticketNumber      String        @unique
   requesterId       Int
-  requester         RequesterUser @relation(fields: [requesterId], references: [id])
+  requester         User          @relation(fields: [requesterId], references: [id])
   categoryId        Int
   category          Category      @relation(fields: [categoryId], references: [id])
   relatedSystemId   Int
@@ -63,12 +70,22 @@ model Ticket {
   summary           String
   description       String
   requestedPriority Priority
+  problemAppearsResolved Boolean         @default(false)
   currentStatus     TicketStatus  @default(NEW)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   attachments       Attachment[]
+  comments          PublicComment[]
+  itPriority    Priority @default(MEDIUM)
+  ticketOwnerId Int?
+  ticketOwner   User?    @relation("TicketOwner", fields: [ticketOwnerId], references: [id])
+
+  @@index([ticketOwnerId])
+  @@index([itPriority])
 
   @@index([requesterId])
+  internalNotes InternalNote[]
+
   @@index([currentStatus])
 }
 
@@ -84,6 +101,52 @@ model Attachment {
   removedReason String?
   removedAt     DateTime?
   createdAt     DateTime  @default(now())
+
+  @@index([ticketId])
+}
+
+model PublicComment {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
+enum Role {
+  REQUESTER
+  IT_STAFF
+  ADMINISTRATOR
+}
+
+model User {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  email              String   @unique
+  passwordHash       String
+  role               Role     @default(REQUESTER)
+  isActive           Boolean  @default(true)
+  mustChangePassword Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  tickets            Ticket[]
+  publicComments     PublicComment[]
+  ownedTickets Ticket[] @relation("TicketOwner")
+  internalNotes InternalNote[]
+}
+
+model InternalNote {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
 
   @@index([ticketId])
 }
