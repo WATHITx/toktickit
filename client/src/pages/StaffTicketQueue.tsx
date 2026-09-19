@@ -75,11 +75,11 @@ export default function StaffTicketQueue() {
       </div>
 
       <div className="row g-2 mb-3">
-        <div className="col-md-4">
+        <div className="col-12 col-lg-4">
           <input className="form-control" placeholder="Search by ticket number or summary..."
             value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <div className="col-md-2">
+        <div className="col-12 col-md-4 col-lg-2">
           <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">All Statuses</option>
             <option value="NEW">New</option>
@@ -90,7 +90,7 @@ export default function StaffTicketQueue() {
             <option value="CLOSED">Closed</option>
           </select>
         </div>
-        <div className="col-md-2">
+        <div className="col-12 col-md-4 col-lg-2">
           <select className="form-select" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
             <option value="">All Priorities</option>
             <option value="LOW">Low</option>
@@ -98,7 +98,7 @@ export default function StaffTicketQueue() {
             <option value="HIGH">High</option>
           </select>
         </div>
-        <div className="col-md-2">
+        <div className="col-12 col-md-4 col-lg-2">
           <select className="form-select" value={ownership} onChange={(e) => setOwnership(e.target.value)}>
             <option value="all">All Tickets</option>
             <option value="mine">Assigned to Me</option>
@@ -114,7 +114,8 @@ export default function StaffTicketQueue() {
 
       {status === "loaded" && (
         <>
-          <table className="table d-none d-md-table">
+          <div className="table-responsive d-none d-lg-block">
+          <table className="table">
             <thead>
               <tr>
                 <th>Ticket No.</th><th>Created</th><th>Summary</th><th>Requester</th>
@@ -137,8 +138,9 @@ export default function StaffTicketQueue() {
               ))}
             </tbody>
           </table>
+          </div>
 
-          <div className="d-md-none">
+          <div className="d-lg-none">
             {tickets.map((t) => (
               <div key={t.id} data-testid="ticket-row" className="card mb-2 p-3"
                 onClick={() => navigate(`/staff/tickets/${t.id}`)} style={{ cursor: "pointer" }}>

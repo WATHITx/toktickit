@@ -1,4 +1,5 @@
 import { test } from "@playwright/test";
+import { loginAs, TEST_USERS } from "../lab-03/helpers";
 
 const VIEWPORTS = {
   desktop: { width: 1280, height: 800 },
@@ -6,17 +7,14 @@ const VIEWPORTS = {
   mobile: { width: 375, height: 812 },
 };
 
-async function loginAsRequester(page: any) {
-  await page.goto("/");
-  await page.selectOption("#requester-select", { label: "Jennifer Anderson" });
-  await page.getByRole("button", { name: /continue/i }).click();
-}
+// Lab 3 replaced the development requester selector with real login
+const loginAsRequester = (page: any) => loginAs(page, TEST_USERS.requester);
 
 for (const [name, size] of Object.entries(VIEWPORTS)) {
   test(`Create Ticket screenshot — ${name}`, async ({ page }) => {
     await page.setViewportSize(size);
     await loginAsRequester(page);
-    await page.getByRole("main").getByRole("link", { name: /create ticket/i }).click();
+    await page.getByRole("navigation").getByRole("link", { name: /create ticket/i }).click();
     await page.screenshot({
       path: `artifacts/lab-02/screenshots/create-ticket/${name}.png`,
       fullPage: true,

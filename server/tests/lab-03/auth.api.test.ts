@@ -61,4 +61,15 @@ describe("Authentication", () => {
     });
     expect(res.status).toBe(400);
   });
+
+  it("logout clears the session so protected routes are rejected (API-05)", async () => {
+    const agent = request.agent(app);
+    await agent.post("/api/auth/login").send({ email: "jennifer.a@toktickit.test", password: "DevPass!123" });
+    expect((await agent.get("/api/auth/me")).status).toBe(200);
+
+    const logout = await agent.post("/api/auth/logout");
+    expect(logout.status).toBe(200);
+
+    expect((await agent.get("/api/auth/me")).status).toBe(401);
+  });
 });

@@ -67,4 +67,12 @@ describe("GET /api/staff/tickets (Ticket Queue)", () => {
     const res = await staffAgent.get("/api/staff/tickets?sortBy=nonsense");
     expect(res.status).toBe(200); // ไม่ error แม้ sortBy จะแปลก
   });
+
+  it("paginates the queue (API-10)", async () => {
+    const res = await staffAgent.get("/api/staff/tickets?page=1&pageSize=2");
+    expect(res.status).toBe(200);
+    expect(res.body.data.length).toBeLessThanOrEqual(2);
+    expect(res.body.pagination).toMatchObject({ page: 1, pageSize: 2 });
+    expect(res.body.pagination.totalPages).toBe(Math.ceil(res.body.pagination.total / 2));
+  });
 });

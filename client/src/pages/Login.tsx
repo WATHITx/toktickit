@@ -26,7 +26,7 @@ export default function Login() {
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh", backgroundColor: "var(--color-bg)" }}>
+    <div className="d-flex justify-content-center align-items-center px-3" style={{ minHeight: "100vh", backgroundColor: "var(--color-bg)" }}>
       <form className="card p-4" style={{ maxWidth: 420, width: "100%" }} onSubmit={handleSubmit}>
         <h2 className="text-center mb-4" style={{ color: "var(--color-primary)" }}>TokTickIT</h2>
         <h4>Sign in to your account</h4>

@@ -52,4 +52,23 @@ describe("Requester ownership from authenticated identity", () => {
 
     expect(res.status).toBe(403);
   });
+
+  it("rejects a Requester calling IT Staff owner/priority/status changes (SEC-05)", async () => {
+    const requester = request.agent(app);
+    await requester.post("/api/auth/login").send({ email: "jennifer.a@toktickit.test", password: "DevPass!123" });
+    const prisma = getPrisma();
+    const ticket = await prisma.ticket.findFirst({ where: { requester: { email: "jennifer.a@toktickit.test" } } });
+    const me = await requester.get("/api/auth/me");
+
+    const owner = await requester.patch(`/api/staff/tickets/${ticket!.id}/owner`).send({ ownerId: me.body.id });
+    const priority = await requester.patch(`/api/staff/tickets/${ticket!.id}/priority`).send({ itPriority: "HIGH" });
+    const status = await requester.patch(`/api/staff/tickets/${ticket!.id}/status`).send({ status: "OPEN" });
+    expect([owner.status, priority.status, status.status]).toEqual([403, 403, 403]);
+
+    // Nothing changed
+    const after = await prisma.ticket.findUnique({ where: { id: ticket!.id } });
+    expect(after!.ticketOwnerId).toBe(ticket!.ticketOwnerId);
+    expect(after!.itPriority).toBe(ticket!.itPriority);
+    expect(after!.currentStatus).toBe(ticket!.currentStatus);
+  });
 });

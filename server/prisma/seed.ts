@@ -19,21 +19,34 @@ const relatedSystems = [
 async function seedUsers() {
   const hash = await bcrypt.hash(DEV_PASSWORD, 10);
 
-  const users = [
+  // mustChangePassword defaults to true (first-login flow). The accounts E2E tests log in with
+  // (jennifer.a, sarah.j, kevin.p, admin) skip it; michael.b stays true for e2e/lab-03/first-login.spec.ts.
+  const users: {
+    name: string; email: string; role: "REQUESTER" | "IT_STAFF" | "ADMINISTRATOR";
+    isActive: boolean; mustChangePassword?: boolean;
+  }[] = [
     // Requesters
-    { name: "Jennifer Anderson", email: "jennifer.a@toktickit.test", role: "REQUESTER" as const, isActive: true },
+    { name: "Jennifer Anderson", email: "jennifer.a@toktickit.test", role: "REQUESTER" as const, isActive: true, mustChangePassword: false },
     { name: "Michael Brown", email: "michael.b@toktickit.test", role: "REQUESTER" as const, isActive: true },
-    { name: "Sarah Johnson", email: "sarah.j@toktickit.test", role: "REQUESTER" as const, isActive: true },
+    { name: "Sarah Johnson", email: "sarah.j@toktickit.test", role: "REQUESTER" as const, isActive: true, mustChangePassword: false },
     { name: "David Lee", email: "david.l@toktickit.test", role: "REQUESTER" as const, isActive: true },
     { name: "Inactive Requester", email: "inactive.req@toktickit.test", role: "REQUESTER" as const, isActive: false },
     // IT Staff
-    { name: "Kevin Patel", email: "kevin.p@toktickit.test", role: "IT_STAFF" as const, isActive: true },
+    { name: "Kevin Patel", email: "kevin.p@toktickit.test", role: "IT_STAFF" as const, isActive: true, mustChangePassword: false },
     { name: "Emily Davis", email: "emily.d@toktickit.test", role: "IT_STAFF" as const, isActive: true },
     { name: "Robert Wilson", email: "robert.w@toktickit.test", role: "IT_STAFF" as const, isActive: true },
     { name: "Inactive Staff", email: "inactive.staff@toktickit.test", role: "IT_STAFF" as const, isActive: false },
     // Administrator
-    { name: "Admin User", email: "admin@toktickit.test", role: "ADMINISTRATOR" as const, isActive: true },
+    { name: "Admin User", email: "admin@toktickit.test", role: "ADMINISTRATOR" as const, isActive: true, mustChangePassword: false },
   ];
+
+  const e2eReadyUser = await prisma.user.findUnique({ where: { email: "jennifer.a@toktickit.test" } });
+if (e2eReadyUser) {
+  await prisma.user.update({
+    where: { id: e2eReadyUser.id },
+    data: { mustChangePassword: false },
+  });
+}
 
   for (const u of users) {
     await prisma.user.upsert({
@@ -43,9 +56,9 @@ async function seedUsers() {
         role: u.role,
         isActive: u.isActive,
         passwordHash: hash,
-        mustChangePassword: true,
+        mustChangePassword: u.mustChangePassword ?? true,
       },
-      create: { ...u, passwordHash: hash, mustChangePassword: true },
+      create: { ...u, passwordHash: hash, mustChangePassword: u.mustChangePassword ?? true },
     });
   }
   console.log(`Seeded ${users.length} users (dev password: ${DEV_PASSWORD}).`);
