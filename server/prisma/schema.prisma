@@ -49,6 +49,13 @@ enum Priority {
 
 enum TicketStatus {
   NEW
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_REQUESTER
+  RESOLVED
+  CLOSED
+  REOPENED
+  CANCELLED
 }
 
 model Ticket {
@@ -77,6 +84,8 @@ model Ticket {
   @@index([itPriority])
 
   @@index([requesterId])
+  internalNotes InternalNote[]
+
   @@index([currentStatus])
 }
 
@@ -127,4 +136,17 @@ model User {
   tickets            Ticket[]
   publicComments     PublicComment[]
   ownedTickets Ticket[] @relation("TicketOwner")
+  internalNotes InternalNote[]
+}
+
+model InternalNote {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
 }

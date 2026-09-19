@@ -8,6 +8,7 @@ import MyTickets from "./pages/MyTickets";
 import TicketDetail from "./pages/TicketDetail";
 import SystemStatusWidget from "./components/SystemStatusWidget";
 import StaffTicketQueue from "./pages/StaffTicketQueue";
+import StaffTicketDetail from "./pages/StaffTicketDetail";
 
 function App() {
   return (
@@ -29,6 +30,14 @@ function App() {
     </ProtectedRoute>
   }
 />
+          <Route
+            path="/staff/tickets/:id"
+            element={
+              <ProtectedRoute allowedRoles={["IT_STAFF", "ADMINISTRATOR"]}>
+                <StaffTicketDetail />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

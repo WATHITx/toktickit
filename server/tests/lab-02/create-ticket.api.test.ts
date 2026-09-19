@@ -5,13 +5,12 @@ import { getPrisma } from "../../src/prisma";
 
 describe("POST /api/tickets", () => {
   it("creates a ticket with valid data (API-01)", async () => {
+    const agent = request.agent(app);
+    await agent.post("/api/auth/login").send({ email: "jennifer.a@toktickit.test", password: "DevPass!123" });
+
     const prisma = getPrisma();
-    const requester = await prisma.user.findFirst({ where: { isActive: true } });
     const category = await prisma.category.findFirst();
     const relatedSystem = await prisma.relatedSystem.findFirst();
-
-    const agent = request.agent(app);
-    await agent.post("/api/auth/login").send({ email: requester!.email, password: "DevPass!123" });
 
     const res = await agent.post("/api/tickets").send({
       categoryId: category!.id,
@@ -26,13 +25,15 @@ describe("POST /api/tickets", () => {
   });
 
   it("rejects empty summary (API-02)", async () => {
-    const prisma = getPrisma();
-    const requester = await prisma.user.findFirst({ where: { isActive: true } });
     const agent = request.agent(app);
-    await agent.post("/api/auth/login").send({ email: requester!.email, password: "DevPass!123" });
+    await agent.post("/api/auth/login").send({ email: "jennifer.a@toktickit.test", password: "DevPass!123" });
+
+    const prisma = getPrisma();
+    const category = await prisma.category.findFirst();
+    const relatedSystem = await prisma.relatedSystem.findFirst();
 
     const res = await agent.post("/api/tickets").send({
-      categoryId: 1, relatedSystemId: 1,
+      categoryId: category!.id, relatedSystemId: relatedSystem!.id,
       summary: "", description: "valid description", requestedPriority: "LOW",
     });
     expect(res.status).toBe(400);
@@ -40,13 +41,15 @@ describe("POST /api/tickets", () => {
   });
 
   it("rejects invalid priority (API-03)", async () => {
-    const prisma = getPrisma();
-    const requester = await prisma.user.findFirst({ where: { isActive: true } });
     const agent = request.agent(app);
-    await agent.post("/api/auth/login").send({ email: requester!.email, password: "DevPass!123" });
+    await agent.post("/api/auth/login").send({ email: "jennifer.a@toktickit.test", password: "DevPass!123" });
+
+    const prisma = getPrisma();
+    const category = await prisma.category.findFirst();
+    const relatedSystem = await prisma.relatedSystem.findFirst();
 
     const res = await agent.post("/api/tickets").send({
-      categoryId: 1, relatedSystemId: 1,
+      categoryId: category!.id, relatedSystemId: relatedSystem!.id,
       summary: "valid", description: "valid description", requestedPriority: "URGENT",
     });
     expect(res.status).toBe(400);
