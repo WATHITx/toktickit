@@ -9,6 +9,7 @@ import TicketDetail from "./pages/TicketDetail";
 import SystemStatusWidget from "./components/SystemStatusWidget";
 import StaffTicketQueue from "./pages/StaffTicketQueue";
 import StaffTicketDetail from "./pages/StaffTicketDetail";
+import UserManagement from "./pages/UserManagement";
 
 function App() {
   return (
@@ -35,6 +36,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["IT_STAFF", "ADMINISTRATOR"]}>
                 <StaffTicketDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedRoles={["ADMINISTRATOR"]}>
+                <UserManagement />
               </ProtectedRoute>
             }
           />
