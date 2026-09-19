@@ -33,6 +33,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
     My Queue
   </Link>
 )}
+{user && user.role === "ADMINISTRATOR" && (
+  <Link to="/admin/users" className={`text-white text-decoration-none ${isActive("/admin/users") ? "fw-bold border-bottom border-white" : ""}`}>
+    Admin
+  </Link>
+)}
 {user && user.role === "REQUESTER" && (
   <>
     <Link to="/my-tickets" className={`text-white text-decoration-none ${isActive("/my-tickets") ? "fw-bold border-bottom border-white" : ""}`}>My Tickets</Link>
