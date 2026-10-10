@@ -15,7 +15,7 @@ const baseTicket = {
 
 function mockApi(ticket = baseTicket) {
   (fetch as any).mockImplementation((url: string) => {
-    const body = url.includes("/notes") || url.includes("/comments") ? []
+    const body = url.includes("/notes") || url.includes("/comments") || url.includes("/actions") ? []
       : url.includes("/staff/users") ? [{ id: 2, name: "Kevin Patel" }]
       : ticket;
     return Promise.resolve({ ok: true, json: async () => body });

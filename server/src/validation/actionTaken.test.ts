@@ -57,6 +57,15 @@ describe("parseActionInput (UNIT-03)", () => {
     expect(fields.actionAt).toBeDefined();
   });
 
+  it("compares the creation time at minute precision (date/time control has no seconds) (BR-08)", () => {
+    const created = new Date("2026-10-09T12:57:30.000Z");
+    const now = new Date("2026-10-09T13:00:00.000Z");
+    const sameMinute = parseActionInput({ description: "ok", actionAt: "2026-10-09T12:57:00.000Z" }, { ticketCreatedAt: created, now });
+    const minuteBefore = parseActionInput({ description: "ok", actionAt: "2026-10-09T12:56:59.000Z" }, { ticketCreatedAt: created, now });
+    expect(sameMinute.fields).toEqual({});
+    expect(minuteBefore.fields.actionAt).toBeDefined();
+  });
+
   it("allows small clock skew but rejects times further in the future (BR-08)", () => {
     const withinSkew = new Date(now.getTime() + FUTURE_TOLERANCE_MS - 1000).toISOString();
     const tooFar = new Date(now.getTime() + FUTURE_TOLERANCE_MS + 1000).toISOString();

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { apiGet, apiPatch, apiPost } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import AppShell from "../components/shell/AppShell";
+import ActionsTaken from "../components/ActionsTaken";
 
 type StaffUser = { id: number; name: string };
 type Note = { id: number; content: string; createdAt: string; author: { name: string } };
@@ -167,6 +168,8 @@ export default function StaffTicketDetail() {
           <p className="form-control" style={{ ...readOnlyStyle, whiteSpace: "pre-wrap" }}>{ticket.description}</p>
         </div>
       </div>
+
+      <ActionsTaken ticketId={ticket.id} ticketStatus={ticket.currentStatus} mode="staff" staffUsers={staffUsers} />
 
       <div className="card p-4 mb-3">
         <h3>Public Comments</h3>
