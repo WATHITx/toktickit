@@ -72,13 +72,11 @@ describe("Lab 4 migration and seed", () => {
     expect(actionCounts.some((n) => n > 1)).toBe(true);
     expect(seeded.some((t) => new Set(t.actionsTaken.map((a) => a.performedById)).size > 1)).toBe(true);
 
-    // Zero-state accounts used by the dashboards
-    const nina = await prisma.user.findUniqueOrThrow({ where: { email: "nina.p@toktickit.test" }, include: { tickets: true } });
-    expect(nina.tickets).toHaveLength(0);
-    const liam = await prisma.user.findUniqueOrThrow({
-      where: { email: "liam.c@toktickit.test" }, include: { ownedTickets: true, assignedActions: true },
-    });
-    expect(liam.ownedTickets).toHaveLength(0);
-    expect(liam.assignedActions).toHaveLength(0);
+    // Zero-state demo accounts exist and the seed gives them no work. (Manual testing may add data to them
+    // later, so dashboard empty-state tests create their own fresh users instead of relying on these.)
+    const nina = await prisma.user.findUniqueOrThrow({ where: { email: "nina.p@toktickit.test" } });
+    const liam = await prisma.user.findUniqueOrThrow({ where: { email: "liam.c@toktickit.test" } });
+    expect(seeded.some((t) => t.requesterId === nina.id || t.ticketOwnerId === liam.id)).toBe(false);
+    expect(seeded.some((t) => t.actionsTaken.some((a) => a.assigneeId === liam.id))).toBe(false);
   });
 });

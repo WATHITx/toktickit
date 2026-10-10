@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { apiGet } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import AppShell from "../components/shell/s";
+import ActionsTaken from "../components/ActionsTaken";
 
 type Attachment = {
   id: number; fileName: string; fileType: string; fileSize: number;
@@ -182,6 +183,8 @@ export default function TicketDetail() {
               <p className="form-control" style={{ backgroundColor: "#F0EFE8", whiteSpace: "pre-wrap" }}>{ticket.description}</p>
             </div>
           </div>
+
+          <ActionsTaken ticketId={ticket.id} ticketStatus={ticket.currentStatus} mode="requester" />
 
           <div className="card p-4">
             <h3>Attachments</h3>

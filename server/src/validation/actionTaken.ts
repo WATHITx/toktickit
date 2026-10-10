@@ -2,6 +2,7 @@
 
 export const ACTION_LIMITS = { description: 2000, result: 2000, followUpNote: 1000, attachmentNotes: 500 };
 export const FUTURE_TOLERANCE_MS = 5 * 60 * 1000; // clock-skew allowance for "not in the future"
+const MINUTE_MS = 60 * 1000;
 
 export type ActionFields = {
   actionAt: Date;
@@ -87,9 +88,10 @@ export function parseActionInput(
     followUpNote = null;
   }
 
-  // BR-08
+  // BR-08 — compared at minute precision, because the date/time control has no seconds
   if (!fields.actionAt) {
-    if (actionAt.getTime() < ctx.ticketCreatedAt.getTime()) {
+    const createdMinute = Math.floor(ctx.ticketCreatedAt.getTime() / MINUTE_MS) * MINUTE_MS;
+    if (actionAt.getTime() < createdMinute) {
       fields.actionAt = "Action Date/Time cannot be before the ticket was created";
     } else if (actionAt.getTime() > ctx.now.getTime() + FUTURE_TOLERANCE_MS) {
       fields.actionAt = "Action Date/Time cannot be in the future";

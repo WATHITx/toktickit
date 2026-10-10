@@ -136,8 +136,9 @@ Zen Green application.
 - BR-07: When Follow-Up Required is true, Follow-up Note is required
   (1–1000 characters). When it is false, any Follow-up Note is cleared.
 - BR-08: Action Date/Time defaults to the current time, cannot be earlier
-  than the Ticket's creation time, and cannot be more than 5 minutes in the
-  future (clock-skew allowance).
+  than the Ticket's creation time (compared to the minute, because the
+  date/time control has no seconds), and cannot be more than 5 minutes in
+  the future (clock-skew allowance).
 - BR-09: Action status flows Planned → Completed or Planned → Cancelled.
   Completed and Cancelled actions are read-only and are never deleted.
 - BR-10: Actions Taken cannot be added to or changed on a Closed or
