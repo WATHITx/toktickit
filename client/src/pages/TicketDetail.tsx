@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { apiGet } from "../api/client";
+import { apiGet, apiPatch, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import AppShell from "../components/shell/s";
 import ActionsTaken from "../components/ActionsTaken";
+import StatusBadge from "../components/StatusBadge";
+import StatusHistory from "../components/StatusHistory";
 
 type Attachment = {
   id: number; fileName: string; fileType: string; fileSize: number;
@@ -20,7 +22,7 @@ type TicketDetailData = {
   id: number; ticketNumber: string; summary: string; description: string;
   category: { name: string }; relatedSystem: { name: string };
   requestedPriority: string; currentStatus: string; problemAppearsResolved: boolean;
-  createdAt: string; requesterId: number; attachments: Attachment[];
+  createdAt: string; requesterId: number; attachments: Attachment[]; version: number;
 };
 type Status = "loading" | "loaded" | "error" | "forbidden" | "not-found";
 
@@ -37,6 +39,10 @@ export default function TicketDetail() {
   const [uploading, setUploading] = useState(false);
   const [removingId, setRemovingId] = useState<number | null>(null);
   const [removeReason, setRemoveReason] = useState("");
+  // Lab 4: Requester reopen (BR-13)
+  const [confirmingReopen, setConfirmingReopen] = useState(false);
+  const [reopening, setReopening] = useState(false);
+  const [reopenError, setReopenError] = useState<string | null>(null);
 
   const fetchTicket = useCallback(async () => {
     if (!user || !id) return;
@@ -81,6 +87,27 @@ export default function TicketDetail() {
     });
     setNewComment("");
     await fetchComments();
+  };
+
+  const handleReopen = async () => {
+    if (!ticket || reopening) return;
+    setReopening(true);
+    setReopenError(null);
+    try {
+      await apiPatch(`/tickets/${ticket.id}/reopen`, { expectedVersion: ticket.version });
+      setConfirmingReopen(false);
+      await fetchTicket();
+    } catch (err) {
+      setConfirmingReopen(false);
+      if (err instanceof ApiError && err.status === 409) {
+        setReopenError("This ticket was changed by IT a moment ago. The latest version is now shown — please check it and try again.");
+        await fetchTicket();
+      } else {
+        setReopenError(err instanceof ApiError ? err.message : "Unable to reach TokTickIT. Please try again.");
+      }
+    } finally {
+      setReopening(false);
+    }
   };
 
   const handleMarkResolved = async () => {
@@ -167,7 +194,7 @@ export default function TicketDetail() {
               </div>
               <div className="col-md-4">
                 <label className="text-muted">Status</label>
-                <div><span className="badge bg-info text-dark">{ticket.currentStatus}</span></div>
+                <div><StatusBadge status={ticket.currentStatus} testId="ticket-status-badge" /></div>
               </div>
             </div>
             <div className="mt-3">
@@ -184,7 +211,29 @@ export default function TicketDetail() {
             </div>
           </div>
 
+          {(ticket.currentStatus === "RESOLVED" || ticket.currentStatus === "CLOSED") && (
+            <div className="card p-3 mb-3 d-flex flex-row flex-wrap align-items-center gap-2">
+              <span className="me-auto">Is the problem back? You can reopen this ticket so IT takes another look.</span>
+              {confirmingReopen ? (
+                <>
+                  <span className="small">Reopen this ticket?</span>
+                  <button className="btn btn-sm btn-primary" onClick={handleReopen} disabled={reopening}>
+                    {reopening ? "Reopening…" : "Yes, reopen"}
+                  </button>
+                  <button className="btn btn-sm btn-outline-secondary" onClick={() => setConfirmingReopen(false)} disabled={reopening}>
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button className="btn btn-outline-primary" onClick={() => setConfirmingReopen(true)}>Reopen Ticket</button>
+              )}
+            </div>
+          )}
+          {reopenError && <div className="alert alert-danger" role="alert">{reopenError}</div>}
+
           <ActionsTaken ticketId={ticket.id} ticketStatus={ticket.currentStatus} mode="requester" />
+
+          <StatusHistory ticketId={ticket.id} mode="requester" refreshKey={ticket.version} />
 
           <div className="card p-4">
             <h3>Attachments</h3>
@@ -252,7 +301,8 @@ export default function TicketDetail() {
               {ticket.problemAppearsResolved ? (
                 <span className="badge bg-success">Problem appears resolved</span>
               ) : (
-                <button className="btn btn-outline-secondary btn-sm" onClick={handleMarkResolved}>
+                <button className="btn btn-outline-secondary btn-sm" onClick={handleMarkResolved}
+                  title="Lets IT know it looks fixed. IT reviews the work and formally resolves the ticket.">
                   Mark problem as resolved
                 </button>
               )}

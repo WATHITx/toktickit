@@ -1,7 +1,7 @@
 import { Router, Response } from "express";
 import { getPrisma } from "../prisma.js";
 import { requireAuth, requireRole, AuthedRequest } from "../middleware/auth.js";
-import { isValidTransition } from "../validation/statusTransitions.js";
+import { changeTicketStatus, getResolutionGate, getStatusHistory, sendOutcome } from "../services/ticketWorkflow.js";
 
 const router = Router();
 const STAFF_ROLES = ["IT_STAFF", "ADMINISTRATOR"];
@@ -93,7 +93,9 @@ router.get("/staff/tickets/:id", requireAuth, requireRole(STAFF_ROLES), async (r
       },
     });
     if (!ticket) return res.status(404).json({ error: "Ticket not found" });
-    res.status(200).json(ticket);
+    // Lab 4: lets the UI explain the resolution gate before the user tries (the status endpoint re-checks it)
+    const resolutionGate = await getResolutionGate(ticket.id, ticket.ticketOwnerId);
+    res.status(200).json({ ...ticket, resolutionGate });
   } catch (err) {
     console.error("Failed to fetch staff ticket:", err);
     res.status(500).json({ error: "Unable to fetch ticket" });
@@ -150,28 +152,32 @@ router.patch("/staff/tickets/:id/priority", requireAuth, requireRole(STAFF_ROLES
   }
 });
 
-// Status transition (BR-13)
+// Status transition — Lab 4: role matrix, resolution gate, stale-update check and history (BR-11..BR-17)
 router.patch("/staff/tickets/:id/status", requireAuth, requireRole(STAFF_ROLES), async (req: AuthedRequest, res: Response) => {
   const ticketId = parseId(req.params.id);
   if (!ticketId) return res.status(404).json({ error: "Ticket not found" });
-  const { status } = req.body;
   try {
-    const prisma = getPrisma();
-    const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
-    if (!ticket) return res.status(404).json({ error: "Ticket not found" });
-
-    if (typeof status !== "string" || !isValidTransition(ticket.currentStatus, status)) {
-      return res.status(400).json({ error: `Cannot transition from ${ticket.currentStatus} to ${status}` });
-    }
-
-    const updated = await prisma.ticket.update({
-      where: { id: ticket.id },
-      data: { currentStatus: status as any },
+    const outcome = await changeTicketStatus({
+      ticketId, to: req.body?.status, expectedVersion: req.body?.expectedVersion, actor: req.user!,
     });
-    res.status(200).json(updated);
+    sendOutcome(res, outcome);
   } catch (err) {
     console.error("Failed to update status:", err);
     res.status(500).json({ error: "Unable to update status" });
+  }
+});
+
+// Status history — append-only, no edit/delete route exists (BR-16)
+router.get("/staff/tickets/:id/history", requireAuth, requireRole(STAFF_ROLES), async (req: AuthedRequest, res: Response) => {
+  const ticketId = parseId(req.params.id);
+  if (!ticketId) return res.status(404).json({ error: "Ticket not found" });
+  try {
+    const ticket = await getPrisma().ticket.findUnique({ where: { id: ticketId }, select: { id: true } });
+    if (!ticket) return res.status(404).json({ error: "Ticket not found" });
+    res.status(200).json(await getStatusHistory(ticketId));
+  } catch (err) {
+    console.error("Failed to fetch status history:", err);
+    res.status(500).json({ error: "Unable to fetch status history" });
   }
 });
 

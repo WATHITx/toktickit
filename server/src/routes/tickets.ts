@@ -3,6 +3,7 @@ import { getPrisma } from "../prisma.js";
 import { formatTicketNumber } from "../utils/ticketNumber.js";
 import { validateTicketInput } from "../validation/ticketValidation.js";
 import { requireAuth, requireRole, AuthedRequest } from "../middleware/auth.js";
+import { changeTicketStatus, getStatusHistory, sendOutcome } from "../services/ticketWorkflow.js";
 
 const router = Router();
 
@@ -184,6 +185,36 @@ router.get("/tickets/:id/comments", requireAuth, async (req: AuthedRequest, res:
   } catch (err) {
     console.error("Failed to fetch comments:", err);
     res.status(500).json({ error: "Unable to fetch comments" });
+  }
+});
+
+// Lab 4: the owning Requester may reopen a Resolved or Closed ticket (BR-13, FR-08)
+router.patch("/tickets/:id/reopen", requireAuth, requireRole(["REQUESTER"]), async (req: AuthedRequest, res: Response) => {
+  const ticketId = Number(req.params.id);
+  if (!Number.isInteger(ticketId) || ticketId <= 0) return res.status(404).json({ error: "Ticket not found" });
+  try {
+    const outcome = await changeTicketStatus({
+      ticketId, to: "REOPENED", expectedVersion: req.body?.expectedVersion, actor: req.user!, requireOwnerId: req.user!.id,
+    });
+    sendOutcome(res, outcome);
+  } catch (err) {
+    console.error("Failed to reopen ticket:", err);
+    res.status(500).json({ error: "Unable to reopen ticket" });
+  }
+});
+
+// Lab 4: status history of the Requester's own ticket (BR-16)
+router.get("/tickets/:id/history", requireAuth, requireRole(["REQUESTER"]), async (req: AuthedRequest, res: Response) => {
+  const ticketId = Number(req.params.id);
+  if (!Number.isInteger(ticketId) || ticketId <= 0) return res.status(404).json({ error: "Ticket not found" });
+  try {
+    const ticket = await getPrisma().ticket.findUnique({ where: { id: ticketId }, select: { requesterId: true } });
+    if (!ticket) return res.status(404).json({ error: "Ticket not found" });
+    if (ticket.requesterId !== req.user!.id) return res.status(403).json({ error: "You do not have access to this ticket" });
+    res.status(200).json(await getStatusHistory(ticketId));
+  } catch (err) {
+    console.error("Failed to fetch status history:", err);
+    res.status(500).json({ error: "Unable to fetch status history" });
   }
 });
 
