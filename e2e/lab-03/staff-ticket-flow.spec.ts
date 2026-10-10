@@ -20,6 +20,9 @@ test("IT Staff claims a ticket and changes its status end-to-end (AC-08)", async
   const statusSelect = page.getByTestId("status-select");
   await expect(statusSelect).toHaveValue("NEW");
   await statusSelect.selectOption("OPEN");
+  // Lab 4: a status change is staged and saved with an inline Confirm
+  await page.getByTestId("status-confirm").getByRole("button", { name: "Confirm" }).click();
+  await expect(page.getByTestId("ticket-status-badge")).toHaveText("Open");
   await expect(statusSelect).toHaveValue("OPEN");
 
   // An invalid jump (OPEN -> CLOSED) is never offered by the UI (BR-13)

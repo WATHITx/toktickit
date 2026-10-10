@@ -158,7 +158,12 @@ or completing without a result), or `TICKET_LOCKED`.
 ### GET /api/staff/tickets/:id and GET /api/tickets/:id (**changed**)
 
 Unchanged, except the response now includes `"version": 4`, which the
-client must send back when changing status.
+client must send back when changing status. The staff endpoint also returns
+the current resolution gate so the UI can explain it before the user tries
+(the status endpoint re-checks it):
+```json
+{ "resolutionGate": { "ok": false, "reasons": ["Complete at least one Action Taken"] } }
+```
 
 ### PATCH /api/staff/tickets/:id/status (**changed**)
 

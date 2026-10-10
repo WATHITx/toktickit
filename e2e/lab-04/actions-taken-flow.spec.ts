@@ -16,7 +16,7 @@ async function addAction(page: Page, description: string, opts: { result?: strin
     await page.getByLabel(/follow-up note/i).fill(opts.followUpNote);
   }
   await page.getByRole("button", { name: "Save Action" }).click();
-  await expect(page.getByRole("status")).toContainText("Action saved");
+  await expect(page.getByRole("status").filter({ hasText: "Action saved" })).toBeVisible();
 }
 
 test("two IT Staff record Actions Taken on one Ticket and the Requester sees both read-only (E2E-01)", async ({ page }) => {
