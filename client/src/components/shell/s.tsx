@@ -29,7 +29,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <span className="text-white fs-4 fw-bold">TokTickIT</span>
 
         {user && (
-          <nav className="d-flex gap-3 flex-wrap">
+          <nav className="d-flex gap-3 flex-wrap" aria-label="Main">
+            <Link to="/dashboard" aria-current={isActive("/dashboard") ? "page" : undefined}
+              className={`text-white text-decoration-none ${isActive("/dashboard") ? "fw-bold border-bottom border-white" : ""}`}>
+              Dashboard
+            </Link>
             {(user.role === "IT_STAFF" || user.role === "ADMINISTRATOR") && (
               <Link to="/my-queue" className={`text-white text-decoration-none ${isActive("/my-queue") ? "fw-bold border-bottom border-white" : ""}`}>
                 My Queue

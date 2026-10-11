@@ -22,5 +22,5 @@ test("requires password change on first login (AC-02)", async ({ page }) => {
   await page.fill("#confirm", "NewSecure!456");
   await page.getByRole("button", { name: "Continue" }).click();
 
-  await expect(page).toHaveURL(/\/my-tickets/);
+  await expect(page).toHaveURL(/\/dashboard/); // Lab 4: the normal app now starts at the Dashboard
 });

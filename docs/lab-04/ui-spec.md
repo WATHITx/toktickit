@@ -71,7 +71,7 @@ such as "Open tickets: 3. View tickets".
 |---|---|---|
 | Open Tickets | `openTickets` | `/my-tickets?status=ACTIVE` |
 | Waiting for Me | `waitingForMe` (amber accent when > 0) | `/my-tickets?status=WAITING_FOR_REQUESTER` |
-| Recently Resolved | `recentlyResolved` | `/my-tickets?status=RESOLVED` |
+| Recently Resolved | `recentlyResolved` | `/my-tickets?status=RECENTLY_RESOLVED` |
 
 **Recently Updated** — up to 5 rows: Ticket No., Summary, Status badge,
 relative time ("2 hours ago", exact time in `title`). Each row links to
@@ -106,6 +106,11 @@ Empty lists: "No urgent tickets", "You have no open actions",
 The Ticket Queue and My Tickets screens read `status`, `ownership`, and
 `itPriority` from the URL on load, show them in their filter controls, and
 keep the URL in sync when filters change (so Back returns to the same view).
+Their status filters include "All open (active)", and My Tickets also has
+"Resolved in the last 7 days". Both lists show the total number of matching
+tickets above the results ("12 tickets"), so a dashboard number can be
+checked against the list it opens. User Management reads `role` the same
+way for the Administrator's user-count links.
 
 ## 6. Actions Taken — IT Staff Ticket Detail
 
