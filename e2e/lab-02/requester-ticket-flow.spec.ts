@@ -6,6 +6,8 @@ import { loginAs, createTicket, TEST_USERS } from "../lab-03/helpers";
 test.describe("Requester ticket flow", () => {
   test("Requester creates a ticket and finds it in My Tickets (AC-01, FR-04)", async ({ page }) => {
     await loginAs(page, TEST_USERS.requester);
+    await expect(page).toHaveURL(/dashboard/); // Lab 4 landing page
+    await page.getByRole("navigation").getByRole("link", { name: "My Tickets" }).click();
     await expect(page).toHaveURL(/my-tickets/);
 
     await page.getByRole("navigation").getByRole("link", { name: /create ticket/i }).click();
@@ -33,12 +35,15 @@ test.describe("Requester ticket flow", () => {
     await createTicket(summary); // owned by Jennifer
 
     await loginAs(page, TEST_USERS.requester);
+    await expect(page).toHaveURL(/dashboard/); // Lab 4 landing page
+    await page.getByRole("navigation").getByRole("link", { name: "My Tickets" }).click();
     await expect(page).toHaveURL(/my-tickets/);
     await page.getByPlaceholder(/search/i).fill(summary);
     await expect(page.locator("tbody tr").filter({ hasText: summary })).toHaveCount(1);
 
     await page.getByRole("button", { name: "Logout" }).click();
     await loginAs(page, "sarah.j@toktickit.test");
+    await page.getByRole("navigation").getByRole("link", { name: "My Tickets" }).click();
     await expect(page).toHaveURL(/my-tickets/);
 
     await page.getByPlaceholder(/search/i).fill(summary);

@@ -19,7 +19,7 @@ export default function Login() {
     try {
       const result = await apiPost<{ mustChangePassword: boolean }>("/auth/login", { email, password });
       await refreshUser();
-      navigate(result.mustChangePassword ? "/change-password" : "/my-tickets");
+      navigate(result.mustChangePassword ? "/change-password" : "/dashboard");
     } catch {
       setStatus("error");
     }

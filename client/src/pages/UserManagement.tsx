@@ -12,7 +12,7 @@ export default function UserManagement() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState(() => new URLSearchParams(window.location.search).get("role") ?? "");
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
 
   const [formMode, setFormMode] = useState<FormMode>("closed");

@@ -41,3 +41,15 @@ export function fromDateTimeLocal(value: string): string | undefined {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
 }
+
+/** "5 minutes ago", "2 hours ago", "3 days ago" — pair with formatDateTime() in a title for the exact time. */
+export function relativeTime(iso: string, now: Date = new Date()): string {
+  const seconds = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 1000));
+  if (seconds < 60) return "just now";
+  const units: [number, string][] = [[60 * 60 * 24, "day"], [60 * 60, "hour"], [60, "minute"]];
+  for (const [size, name] of units) {
+    const n = Math.floor(seconds / size);
+    if (n >= 1) return `${n} ${name}${n === 1 ? "" : "s"} ago`;
+  }
+  return "just now";
+}

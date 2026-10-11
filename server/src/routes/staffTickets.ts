@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { getPrisma } from "../prisma.js";
 import { requireAuth, requireRole, AuthedRequest } from "../middleware/auth.js";
 import { changeTicketStatus, getResolutionGate, getStatusHistory, sendOutcome } from "../services/ticketWorkflow.js";
+import { statusWhere } from "../validation/dashboardRules.js";
 
 const router = Router();
 const STAFF_ROLES = ["IT_STAFF", "ADMINISTRATOR"];
@@ -9,7 +10,6 @@ const SORTABLE_FIELDS = ["createdAt", "ticketNumber", "itPriority", "currentStat
 
 router.get("/staff/tickets", requireAuth, requireRole(STAFF_ROLES), async (req: AuthedRequest, res: Response) => {
   const search = (req.query.search as string) || "";
-  const status = req.query.status as string | undefined;
   const itPriority = ["LOW", "MEDIUM", "HIGH"].includes(req.query.itPriority as string)
     ? (req.query.itPriority as string) : undefined;
   const ownership = (req.query.ownership as string) || "all"; // mine | unassigned | all
@@ -22,7 +22,7 @@ router.get("/staff/tickets", requireAuth, requireRole(STAFF_ROLES), async (req: 
   try {
     const prisma = getPrisma();
     const where: any = {
-      ...(status ? { currentStatus: status } : {}),
+      ...statusWhere(req.query.status), // a status, ACTIVE or RECENTLY_RESOLVED; unknown values are ignored
       ...(itPriority ? { itPriority } : {}),
       ...(ownership === "mine" ? { ticketOwnerId: req.user!.id } : {}),
       ...(ownership === "unassigned" ? { ticketOwnerId: null } : {}),

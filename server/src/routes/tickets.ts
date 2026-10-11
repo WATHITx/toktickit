@@ -4,6 +4,7 @@ import { formatTicketNumber } from "../utils/ticketNumber.js";
 import { validateTicketInput } from "../validation/ticketValidation.js";
 import { requireAuth, requireRole, AuthedRequest } from "../middleware/auth.js";
 import { changeTicketStatus, getStatusHistory, sendOutcome } from "../services/ticketWorkflow.js";
+import { statusWhere } from "../validation/dashboardRules.js";
 
 const router = Router();
 
@@ -26,6 +27,7 @@ router.get("/tickets", requireAuth, requireRole(["REQUESTER"]), async (req: Auth
     const prisma = getPrisma();
     const where: any = {
       requesterId,
+      ...statusWhere(req.query.status), // Lab 4 drill-down: a status, ACTIVE or RECENTLY_RESOLVED
       ...(categoryId ? { categoryId } : {}),
       ...(requestedPriority ? { requestedPriority: requestedPriority as any } : {}),
       ...(search ? {

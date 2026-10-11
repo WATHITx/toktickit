@@ -246,13 +246,18 @@ changed (BR-15).
 
 ### GET /api/tickets (Requester My Tickets)
 
-Adds an optional `status` parameter: one `TicketStatus` value, or `ACTIVE`
-(New, Open, In Progress, Waiting for Requester, Reopened — BR-18). Unknown
-values are ignored (same convention as other Lab 2 filters).
+Adds an optional `status` parameter: one `TicketStatus` value, `ACTIVE`
+(New, Open, In Progress, Waiting for Requester, Reopened — BR-18), or
+`RECENTLY_RESOLVED` (tickets with a status-history entry to Resolved in the
+recent window — the same rule as the `recentlyResolved` metric, so the card
+and its list always agree). Unknown values are ignored (same convention as
+other Lab 2 filters). The response's `pagination.total` is shown in the UI
+as the list's ticket count.
 
 ### GET /api/staff/tickets (Ticket Queue)
 
-The existing `status` parameter also accepts `ACTIVE`. Existing `ownership`
+The existing `status` parameter also accepts `ACTIVE` and `RECENTLY_RESOLVED`
+(unknown values are now ignored instead of causing an error). Existing `ownership`
 (`mine` / `unassigned` / `all`) and `itPriority` parameters are unchanged.
 Dashboard drill-down combines them, e.g.
 `/api/staff/tickets?status=ACTIVE&ownership=unassigned`.
@@ -288,7 +293,7 @@ at most 5 items (BR-24). "Recent" = last 7 × 24 hours (BR-19).
 |---|---|---|
 | `openTickets` | count of own Tickets with status in ACTIVE | `/my-tickets?status=ACTIVE` |
 | `waitingForMe` | count of own Tickets with status `WAITING_FOR_REQUESTER` | `/my-tickets?status=WAITING_FOR_REQUESTER` |
-| `recentlyResolved` | count of own Tickets with a history entry `toStatus = RESOLVED` in the recent window | `/my-tickets?status=RESOLVED` |
+| `recentlyResolved` | count of own Tickets with a history entry `toStatus = RESOLVED` in the recent window | `/my-tickets?status=RECENTLY_RESOLVED` |
 | `recentlyUpdated` | own Tickets ordered by `updatedAt` desc, limit 5 | `/tickets/:id` |
 
 **Response 403:** caller is not a Requester.

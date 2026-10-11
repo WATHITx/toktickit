@@ -101,7 +101,8 @@ Zen Green application.
 - FR-14: The system shall provide Administrators the IT Staff Dashboard
   plus concise user-account counts.
 - FR-15: Every dashboard count or list item shall drill down to the Ticket
-  Queue, My Tickets, or Ticket Detail with matching filters applied.
+  Queue, My Tickets, or Ticket Detail with matching filters applied, and the
+  list shall show the same number of tickets as the count.
 - FR-16: The My Tickets, Ticket Queue, and User Management screens shall
   accept their filters from URL query parameters so drill-down links open
   the filtered view.
