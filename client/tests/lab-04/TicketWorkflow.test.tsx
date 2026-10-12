@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AuthContext } from "../../src/context/AuthContext";
 import StaffTicketDetail from "../../src/pages/StaffTicketDetail";
 import TicketDetail from "../../src/pages/TicketDetail";
+import ProtectedRoute from "../../src/components/ProtectedRoute";
 
 const kevin = { id: 2, name: "Kevin Patel", email: "kevin.p@test.com", role: "IT_STAFF" };
 const jennifer = { id: 1, name: "Jennifer Anderson", email: "j@test.com", role: "REQUESTER" };
@@ -167,6 +168,28 @@ describe("Ticket workflow UI", () => {
     expect(JSON.parse(writes()[0][1].body)).toEqual({ expectedVersion: 5 });
     expect(await screen.findByTestId("ticket-status-badge")).toHaveTextContent("Reopened");
     expect(screen.queryByRole("button", { name: "Reopen Ticket" })).not.toBeInTheDocument();
+  });
+
+  it("shows a Forbidden screen, not Login, when a Requester opens a staff route (UI-12, FR-20)", async () => {
+    mockApi(() => staffTicket());
+    render(
+      <MemoryRouter initialEntries={["/staff/tickets/1"]}>
+        <AuthContext.Provider value={{ user: jennifer, loading: false, refreshUser: vi.fn(), setUser: vi.fn() }}>
+          <Routes>
+            <Route path="/login" element={<p>login screen</p>} />
+            <Route path="/staff/tickets/:id" element={
+              <ProtectedRoute allowedRoles={["IT_STAFF", "ADMINISTRATOR"]}><StaffTicketDetail /></ProtectedRoute>
+            } />
+          </Routes>
+        </AuthContext.Provider>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole("heading", { name: /you don't have access/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to Dashboard" })).toBeInTheDocument();
+    expect(screen.queryByText("login screen")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("status-select")).not.toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalledWith("/api/staff/tickets/1", expect.anything());
   });
 
   it("does not offer Reopen on an active ticket and keeps the resolved hint advisory (BR-13, BR-15)", async () => {

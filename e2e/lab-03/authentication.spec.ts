@@ -31,8 +31,9 @@ test.describe("Authentication", () => {
     await loginAs(page, TEST_USERS.requester);
     await page.goto("/my-queue");
 
-    await expect(page).not.toHaveURL(/\/my-queue/);
-    await expect(page.getByRole("heading", { name: "My Queue" })).not.toBeVisible();
+    // Lab 4 (FR-20): a Forbidden screen instead of a redirect; the queue is never rendered
+    await expect(page.getByRole("heading", { name: /you don't have access/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "My Queue" })).toHaveCount(0);
   });
 
   test("shows each role only the navigation it can use", async ({ page }) => {

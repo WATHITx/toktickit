@@ -344,6 +344,19 @@ at most 5 items (BR-24). "Recent" = last 7 × 24 hours (BR-19).
 
 ---
 
+## GET /api/auth/session (hardening)
+
+The client's start-up check. Same user shape as `GET /api/auth/me`, but it answers
+`200 { "user": null }` when there is no valid session (no cookie, expired or tampered token, or an
+inactive account) instead of 401, so opening the Login page does not log an error in the browser
+console. `GET /api/auth/me` keeps its Lab 3 contract (401 without a session).
+
+```json
+{ "user": { "id": 6, "name": "Kevin Patel", "email": "kevin.p@toktickit.test", "role": "IT_STAFF", "mustChangePassword": false } }
+```
+
+---
+
 ## Health and Regression
 
 `GET /api/health` is unchanged (`200 { "status": "ok", "service": "TokTickIT API" }`).

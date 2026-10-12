@@ -11,6 +11,8 @@ import StaffTicketQueue from "./pages/StaffTicketQueue";
 import StaffTicketDetail from "./pages/StaffTicketDetail";
 import UserManagement from "./pages/UserManagement";
 import Dashboard from "./pages/Dashboard";
+import AppShell from "./components/shell/AppShell";
+import { NotFoundMessage } from "./components/PageStates";
 
 function App() {
   return (
@@ -49,6 +51,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="*" element={<ProtectedRoute><AppShell><NotFoundMessage /></AppShell></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

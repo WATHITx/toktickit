@@ -1,128 +1,126 @@
-# toktickit
+# TokTickIT
 
-A simple full‑stack TypeScript project (Vite + React frontend, Node/Express backend) using Prisma for the database. This repository is organized for development and testing in a student lab environment.
+TokTickIT is a small IT service-desk application built across CPE 334 Labs 1–4: Requesters raise
+Tickets, IT Staff work them (owner, IT Priority, status workflow, Public Comments, Internal Notes,
+Actions Taken), Administrators manage user accounts, and every role starts from a dashboard.
 
-## Quick overview
-
-- **Client:** Vite + React application in `client/`.
-- **Server:** TypeScript Node/Express API in `server/` with Prisma ORM in `server/prisma`.
-- **Tests:** Vitest-based tests for both client and server under `tests/`.
+- **Client:** Vite + React + TypeScript + Bootstrap (Zen Green theme) in `client/`
+- **Server:** Node.js + Express + TypeScript API in `server/`, Prisma ORM on PostgreSQL
+- **Tests:** Vitest (server unit/API, client components) and Playwright (end-to-end + screenshots)
+- **Docs:** per-lab specification, API, UI and test plans in `docs/lab-0X/`
 
 ## Prerequisites
 
-- Node.js (recommended v18+)
-- npm (or another Node package manager)
-- A database supported by Prisma (set via `DATABASE_URL`) — commonly SQLite or PostgreSQL for labs.
+- Node.js 18 or newer and npm
+- PostgreSQL 14 or newer running locally
 
 ## Setup
 
-1. Install dependencies
+1. Install dependencies (repository root for Playwright, then server and client):
 
-	 - Server
+   ```powershell
+   npm install
+   npx playwright install chromium
+   cd server; npm install
+   cd ../client; npm install
+   ```
 
-		 ```powershell
-		 cd server
-		 npm install
-		 ```
+2. Copy `server/.env.example` to `server/.env` and fill in your values (never commit `.env`):
 
-	 - Client
+   ```text
+   DATABASE_URL="postgresql://<user>:<password>@localhost:5432/toktickit?schema=public"
+   JWT_SECRET="<any long random string>"
+   ```
 
-		 ```powershell
-		 cd ../client
-		 npm install
-		 ```
+3. Apply the migrations and load the seed data (from `server/`):
 
-2. Configure the database
+   ```powershell
+   npx prisma migrate deploy
+   npm run prisma:seed
+   ```
 
-	 - Create a `.env` file inside `server/` with at least:
+   The seed is idempotent — run it again at any time. It restores the demo accounts' passwords and
+   adds the Lab 4 demo tickets (`SEED-L4-01` … `SEED-L4-09`) only if they are missing.
 
-		 ```text
-		 DATABASE_URL="<your-database-connection-string>"
-		 ```
+   Before migrating a database that already holds data, take a backup so it can be restored:
 
-	 - Run Prisma migrations (creates or updates the database schema) and seed the DB:
+   ```powershell
+   pg_dump "<DATABASE_URL without ?schema=public>" -f backup.sql
+   ```
 
-		 ```powershell
-		 cd server
-		 npm run prisma:migrate
-		 npm run prisma:seed
-		 ```
+## Running the app
 
-		 If you prefer to push the schema without migrations during development, use `npx prisma db push`.
+```powershell
+cd server; npm run dev      # API on http://localhost:3000
+cd client; npm run dev      # UI on http://localhost:5173 (proxies /api to the server)
+```
 
-## Running the app (development)
+### Demo accounts
 
-- Start the server (auto-reloads via `tsx`):
+All seeded accounts use the dev-only password **`DevPass!123`**.
 
-	```powershell
-	cd server
-	npm run dev
-	```
+| Account | Role | Notes |
+|---|---|---|
+| `jennifer.a@toktickit.test` | Requester | main Requester demo |
+| `sarah.j@toktickit.test`, `david.l@toktickit.test` | Requester | own the Lab 4 demo tickets |
+| `michael.b@toktickit.test` | Requester | must change password at first login |
+| `nina.p@toktickit.test` | Requester | no tickets — empty dashboard |
+| `kevin.p@toktickit.test` | IT Staff | main IT Staff demo |
+| `emily.d@toktickit.test`, `robert.w@toktickit.test` | IT Staff | must change password at first login |
+| `liam.c@toktickit.test` | IT Staff | no assigned work — empty dashboard |
+| `admin@toktickit.test` | Administrator | user management + admin dashboard |
+| `inactive.req@…`, `inactive.staff@…` | — | inactive, cannot sign in |
 
-- Start the client dev server:
+### Demonstration walkthrough
 
-	```powershell
-	cd client
-	npm run dev
-	```
-
-Open the client URL printed by Vite (usually http://localhost:5173) and ensure the server API port matches the client's requests.
-
-## Build & Production
-
-- Build the client:
-
-	```powershell
-	cd client
-	npm run build
-	```
-
-- Build the server and run the compiled output:
-
-	```powershell
-	cd server
-	npm run build
-	npm start
-	```
+1. **Requester** (`jennifer.a`): Dashboard → click a metric card → filtered My Tickets → Create
+   Ticket → Ticket Detail (attachments, Public Comments, "Work Performed by IT", Status History).
+2. **IT Staff** (`kevin.p`): Dashboard → Unassigned → open a ticket → Claim for me → set IT Priority
+   → change status (staged, then Confirm) → add an Action Taken, complete it → Resolved → Closed.
+   Try Resolved before completing an action to see the resolution gate.
+3. **Requester again**: open the closed ticket → Reopen Ticket.
+4. **Administrator** (`admin`): Dashboard user counts → User Management (create, edit, reset
+   password; self-deactivation and last-admin protection).
+5. Open a staff URL as a Requester to see the Forbidden screen.
 
 ## Testing
 
-- Run client tests:
+Run the suites one at a time (each one is memory-hungry):
 
-	```powershell
-	cd client
-	npm run test
-	```
+```powershell
+cd server; npm run test          # unit + API + Labs 1–4 regression (re-seeds dev users first)
+cd client; npm run test          # React component tests
+npx playwright test              # E2E + responsive screenshots, from the repository root
+```
 
-- Run server tests:
+- Playwright starts both dev servers if they are not running and re-seeds the database before the run.
+- It runs **one worker by default**; more workers each start their own Chromium and can exhaust memory.
+  Use `$env:PW_WORKERS=2; npx playwright test` on a machine with spare RAM.
+- Screenshots are written to `artifacts/lab-0X/screenshots/`.
 
-	```powershell
-	cd server
-	npm run test
-	```
+### Cleaning up test-generated data
+
+The automated tests create tickets in the development database. Before a demo or before capturing
+final screenshots, remove them (seeded demo tickets are kept):
+
+```powershell
+cd server
+npx tsx prisma/cleanupTestData.ts           # dry run: shows what would be deleted
+npx tsx prisma/cleanupTestData.ts --apply   # deletes it (take a pg_dump first)
+```
 
 ## Project structure
 
-- `client/` — Vite + React source, tests, and build scripts.
-- `server/` — Express API, Prisma schema & seed, tests, and server scripts.
-- `server/prisma/` — Prisma schema and seed scripts.
-- `tests/` & `docs/` — Lab tests and documentation for instructors/students.
-
-## Notes & tips
-
-- The server package.json includes conveniences:
-	- `npm run dev` — runs `tsx watch src/index.ts` for development.
-	- `npm run prisma:migrate` — runs Prisma migrations.
-	- `npm run prisma:seed` — runs the seed script.
-
-- The client package.json includes:
-	- `npm run dev` — starts Vite dev server.
-	- `npm run build` — builds the production bundle.
-
-## Contributing
-
-Fork, create a branch, and open a PR. Keep changes focused and include tests when appropriate.
+```
+client/            React app (pages/, components/, api/, utils/) and component tests (tests/lab-0X/)
+server/            Express API (routes/, services/, validation/, middleware/)
+server/prisma/     schema, migrations, seed and cleanup scripts
+server/tests/      API and regression tests per lab
+e2e/               Playwright specs per lab
+docs/lab-0X/       specification, api-spec, ui-spec, tests, reviewer and AI-use notes
+artifacts/         screenshots produced by the Playwright visual specs
+```
 
 ## License
 
-This project is provided for educational use. Add a license file if you plan to release it publicly (for example, `MIT`).
+Provided for educational use in CPE 334.

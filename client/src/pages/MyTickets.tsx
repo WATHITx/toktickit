@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiGet } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import AppShell from "../components/shell/s";
+import AppShell from "../components/shell/AppShell";
+import { LoadingState } from "../components/PageStates";
 
 type Ticket = {
   id: number; ticketNumber: string; summary: string;
@@ -150,7 +151,7 @@ export default function MyTickets() {
         </div>
       </div>
 
-      {status === "loading" && <p>⏳ loading...</p>}
+      {status === "loading" && <LoadingState label="Loading tickets…" />}
       {status === "error" && <p className="text-danger">Unable to load tickets.</p>}
       {status === "empty" && (
         <div className="alert alert-secondary">

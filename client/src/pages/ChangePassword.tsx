@@ -63,7 +63,7 @@ export default function ChangePassword() {
 
         <button type="submit" className="btn btn-primary w-100 mt-4"
           disabled={!allRulesPass || !passwordsMatch || status === "submitting"}>
-          {status === "submitting" ? "Saving…" : "Continue"}
+          {status === "submitting" ? "Savingâ€¦" : "Continue"}
         </button>
       </form>
     </div>
