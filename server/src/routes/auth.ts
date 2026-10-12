@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { getPrisma } from "../prisma.js";
-import { signSession } from "../utils/jwt.js";
+import { signSession, verifySession } from "../utils/jwt.js";
 import { validatePassword } from "../validation/passwordValidation.js";
 import { requireAuth, AuthedRequest } from "../middleware/auth.js";
 
@@ -60,6 +60,32 @@ router.get("/auth/me", requireAuth, async (req: AuthedRequest, res: Response) =>
     });
   } catch {
     res.status(500).json({ error: "Unable to fetch current user" });
+  }
+});
+
+// GET /api/auth/session — the app's start-up check. Same user shape as /auth/me, but answers 200 { user: null }
+// when signed out, so opening the Login page does not log a 401 in the browser console (Lab 4 hardening).
+// /auth/me keeps its Lab 3 contract (401 without a session).
+router.get("/auth/session", async (req: Request, res: Response) => {
+  const token = req.cookies?.toktickit_session;
+  let userId: number | null = null;
+  if (token) {
+    try {
+      userId = verifySession(token).userId;
+    } catch {
+      userId = null; // expired or tampered token = signed out
+    }
+  }
+  if (userId === null) return res.status(200).json({ user: null });
+
+  try {
+    const user = await getPrisma().user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) return res.status(200).json({ user: null });
+    res.status(200).json({
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, mustChangePassword: user.mustChangePassword },
+    });
+  } catch {
+    res.status(500).json({ error: "Unable to check the session" });
   }
 });
 

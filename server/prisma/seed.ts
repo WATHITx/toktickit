@@ -20,7 +20,7 @@ async function seedUsers() {
   const hash = await bcrypt.hash(DEV_PASSWORD, 10);
 
   // mustChangePassword defaults to true (first-login flow). The accounts E2E tests log in with
-  // (jennifer.a, sarah.j, kevin.p, admin) skip it; michael.b stays true for e2e/lab-03/first-login.spec.ts.
+  // (jennifer.a, sarah.j, david.l, kevin.p, admin) skip it; michael.b stays true for e2e/lab-03/first-login.spec.ts.
   const users: {
     name: string; email: string; role: "REQUESTER" | "IT_STAFF" | "ADMINISTRATOR";
     isActive: boolean; mustChangePassword?: boolean;
@@ -29,7 +29,7 @@ async function seedUsers() {
     { name: "Jennifer Anderson", email: "jennifer.a@toktickit.test", role: "REQUESTER" as const, isActive: true, mustChangePassword: false },
     { name: "Michael Brown", email: "michael.b@toktickit.test", role: "REQUESTER" as const, isActive: true },
     { name: "Sarah Johnson", email: "sarah.j@toktickit.test", role: "REQUESTER" as const, isActive: true, mustChangePassword: false },
-    { name: "David Lee", email: "david.l@toktickit.test", role: "REQUESTER" as const, isActive: true },
+    { name: "David Lee", email: "david.l@toktickit.test", role: "REQUESTER" as const, isActive: true, mustChangePassword: false }, // owns Lab 4 demo tickets
     { name: "Inactive Requester", email: "inactive.req@toktickit.test", role: "REQUESTER" as const, isActive: false },
     // Lab 4: owns no tickets, so the Requester Dashboard shows zero metrics and empty states
     { name: "Nina Park", email: "nina.p@toktickit.test", role: "REQUESTER" as const, isActive: true, mustChangePassword: false },

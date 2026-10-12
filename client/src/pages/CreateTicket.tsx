@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import AppShell from "../components/shell/s";
+import AppShell from "../components/shell/AppShell";
 
 type Category = { id: number; name: string };
 type RelatedSystem = { id: number; name: string };

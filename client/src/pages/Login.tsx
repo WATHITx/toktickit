@@ -49,7 +49,7 @@ export default function Login() {
         )}
 
         <button type="submit" className="btn btn-primary w-100 mt-4" disabled={status === "submitting"}>
-          {status === "submitting" ? "Signing in…" : "Sign In"}
+          {status === "submitting" ? "Signing inâ€¦" : "Sign In"}
         </button>
       </form>
     </div>

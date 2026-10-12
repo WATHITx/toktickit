@@ -46,6 +46,7 @@ test("non-Administrator cannot access User Management directly", async ({ page }
   await loginAs(page, TEST_USERS.staff);
   await page.goto("/admin/users");
 
-  await expect(page).not.toHaveURL(/\/admin\/users/);
+  // Lab 4 (FR-20): a Forbidden screen instead of a redirect; the user list is never rendered
+  await expect(page.getByRole("heading", { name: /you don't have access/i })).toBeVisible();
   await expect(page.getByRole("button", { name: "+ Create User" })).toHaveCount(0);
 });

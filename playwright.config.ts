@@ -5,6 +5,9 @@ export default defineConfig({
   timeout: 30000,
   globalSetup: "./e2e/global-setup.ts",
   retries: 1,
+  // Each worker runs its own Chromium on top of the dev servers and PostgreSQL. More than a couple of workers
+  // exhausted memory on a 16 GB laptop and froze it, so run serially by default (override with --workers=N).
+  workers: Number(process.env.PW_WORKERS) || 1,
   use: {
     baseURL: "http://localhost:5173",
     screenshot: "only-on-failure",

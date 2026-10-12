@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { apiGet, apiPatch, apiPost, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import AppShell from "../components/shell/AppShell";
+import { LoadingState, NotFoundMessage } from "../components/PageStates";
 import ActionsTaken from "../components/ActionsTaken";
 import StatusBadge from "../components/StatusBadge";
 import StatusHistory from "../components/StatusHistory";
@@ -38,8 +39,9 @@ export default function StaffTicketDetail() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newNote, setNewNote] = useState("");
   const [newComment, setNewComment] = useState("");
+  const [posting, setPosting] = useState<"note" | "comment" | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "loaded" | "error" | "not-found">("loading");
   // Ticket workflow (docs/lab-04/ui-spec.md Section 8)
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [statusReasons, setStatusReasons] = useState<string[]>([]);
@@ -62,8 +64,8 @@ export default function StaffTicketDetail() {
       setComments(commentsData);
       setStaffUsers(usersData);
       setStatus("loaded");
-    } catch {
-      setStatus("error");
+    } catch (err) {
+      setStatus(err instanceof ApiError && err.status === 404 ? "not-found" : "error");
     }
   }, [id]);
 
@@ -75,7 +77,8 @@ export default function StaffTicketDetail() {
     return () => clearTimeout(timer);
   }, [statusNotice]);
 
-  if (status === "loading") return <AppShell><p>⏳ loading...</p></AppShell>;
+  if (status === "loading") return <AppShell><LoadingState label="Loading ticket…" /></AppShell>;
+  if (status === "not-found") return <AppShell><NotFoundMessage what="ticket" /></AppShell>;
   if (status === "error" || !ticket) return <AppShell><p className="text-danger">Unable to load this ticket.</p></AppShell>;
 
   const allowedNextStatuses = allowedTransitions(ticket.currentStatus, user?.role ?? "");
@@ -137,17 +140,24 @@ export default function StaffTicketDetail() {
     await fetchAll();
   };
 
-  const handlePostNote = async () => {
-    if (!newNote.trim()) return;
-    await runAction(() => apiPost(`/staff/tickets/${ticket.id}/notes`, { content: newNote }));
-    setNewNote("");
+  // Posts a note or comment once; the text is cleared only after the server accepted it (FR-19)
+  const post = async (kind: "note" | "comment", path: string, content: string, clear: () => void) => {
+    if (!content.trim() || posting) return;
+    setPosting(kind);
+    setActionError(null);
+    try {
+      await apiPost(path, { content });
+      clear();
+      await fetchAll();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Unable to reach TokTickIT. Please try again.");
+    } finally {
+      setPosting(null);
+    }
   };
 
-  const handlePostComment = async () => {
-    if (!newComment.trim()) return;
-    await runAction(() => apiPost(`/tickets/${ticket.id}/comments`, { content: newComment }));
-    setNewComment("");
-  };
+  const handlePostNote = () => post("note", `/staff/tickets/${ticket.id}/notes`, newNote, () => setNewNote(""));
+  const handlePostComment = () => post("comment", `/tickets/${ticket.id}/comments`, newComment, () => setNewComment(""));
 
   return (
     <AppShell>
@@ -264,7 +274,9 @@ export default function StaffTicketDetail() {
         ))}
         <div className="d-flex gap-2 mt-2">
           <input className="form-control" aria-label="Public comment" value={newComment} onChange={(e) => setNewComment(e.target.value)} />
-          <button className="btn btn-primary" onClick={handlePostComment}>Post</button>
+          <button className="btn btn-primary" onClick={handlePostComment} disabled={!newComment.trim() || posting !== null}>
+            {posting === "comment" ? "Posting…" : "Post"}
+          </button>
         </div>
       </div>
 
@@ -279,7 +291,9 @@ export default function StaffTicketDetail() {
         </div>
         <div className="d-flex gap-2 mt-2">
           <input className="form-control" aria-label="Internal note" value={newNote} onChange={(e) => setNewNote(e.target.value)} data-testid="note-input" />
-          <button className="btn btn-sm btn-warning" onClick={handlePostNote}>Add Note</button>
+          <button className="btn btn-sm btn-warning" onClick={handlePostNote} disabled={!newNote.trim() || posting !== null}>
+            {posting === "note" ? "Adding…" : "Add Note"}
+          </button>
         </div>
       </div>
     </AppShell>

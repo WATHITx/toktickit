@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { apiGet, apiPost, apiPatch, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import AppShell from "../components/shell/AppShell";
+import { LoadingState } from "../components/PageStates";
 
 type User = { id: number; name: string; email: string; role: string; isActive: boolean };
 type FormMode = "closed" | "create" | "edit";
@@ -139,7 +140,7 @@ export default function UserManagement() {
             </select>
           </div>
 
-          {status === "loading" && <p>⏳ loading...</p>}
+          {status === "loading" && <LoadingState label="Loading users…" />}
           {status === "error" && <p className="text-danger">Unable to load users.</p>}
 
           {status === "loaded" && (

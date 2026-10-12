@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { apiGet, apiPatch, ApiError } from "../api/client";
+import { apiGet, apiPatch, apiPost, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import AppShell from "../components/shell/s";
+import AppShell from "../components/shell/AppShell";
+import { LoadingState, ForbiddenMessage, NotFoundMessage } from "../components/PageStates";
 import ActionsTaken from "../components/ActionsTaken";
 import StatusBadge from "../components/StatusBadge";
 import StatusHistory from "../components/StatusHistory";
@@ -34,6 +35,8 @@ export default function TicketDetail() {
   const [ticket, setTicket] = useState<TicketDetailData | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [postingComment, setPostingComment] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -77,16 +80,20 @@ export default function TicketDetail() {
 
   if (!user) return null;
 
+  // Posts once; the text is cleared only after the server accepted it (FR-19)
   const handlePostComment = async () => {
-    if (!newComment.trim() || !ticket) return;
-    await fetch(`/api/tickets/${ticket.id}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ content: newComment.trim() }),
-    });
-    setNewComment("");
-    await fetchComments();
+    if (!newComment.trim() || !ticket || postingComment) return;
+    setPostingComment(true);
+    setCommentError(null);
+    try {
+      await apiPost(`/tickets/${ticket.id}/comments`, { content: newComment.trim() });
+      setNewComment("");
+      await fetchComments();
+    } catch (err) {
+      setCommentError(err instanceof ApiError ? err.message : "Unable to reach TokTickIT. Please try again.");
+    } finally {
+      setPostingComment(false);
+    }
   };
 
   const handleReopen = async () => {
@@ -174,10 +181,10 @@ export default function TicketDetail() {
 
   return (
     <AppShell>
-      {status === "loading" && <p>⏳ loading...</p>}
+      {status === "loading" && <LoadingState label="Loading ticket…" />}
       {status === "error" && <p className="text-danger">Unable to load this ticket.</p>}
-      {status === "forbidden" && <p className="text-danger">You do not have access to this ticket.</p>}
-      {status === "not-found" && <p className="text-danger">Ticket not found.</p>}
+      {status === "forbidden" && <ForbiddenMessage />}
+      {status === "not-found" && <NotFoundMessage what="ticket" />}
 
       {status === "loaded" && ticket && (
         <>
@@ -239,7 +246,7 @@ export default function TicketDetail() {
             <h3>Attachments</h3>
 
             <input type="file" className="form-control mb-2" onChange={handleUpload} disabled={uploading} />
-            {uploading && <p>⏳ Uploading...</p>}
+            {uploading && <LoadingState label="Uploading…" />}
             {uploadError && <div className="alert alert-danger">{uploadError}</div>}
 
             <ul className="list-group">
@@ -328,10 +335,11 @@ export default function TicketDetail() {
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Add a comment..."
               />
-              <button className="btn btn-primary" onClick={handlePostComment} disabled={!newComment.trim()}>
-                Post
+              <button className="btn btn-primary" onClick={handlePostComment} disabled={!newComment.trim() || postingComment}>
+                {postingComment ? "Posting…" : "Post"}
               </button>
             </div>
+            {commentError && <div className="alert alert-danger mt-2 mb-0" role="alert">{commentError}</div>}
           </div>
         </>
       )}

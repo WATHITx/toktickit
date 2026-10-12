@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiGet } from "../api/client";
 import AppShell from "../components/shell/AppShell";
+import { LoadingState } from "../components/PageStates";
 
 type Ticket = {
   id: number; ticketNumber: string; summary: string;
@@ -124,7 +125,7 @@ export default function StaffTicketQueue() {
         </div>
       </div>
 
-      {status === "loading" && <p>⏳ loading...</p>}
+      {status === "loading" && <LoadingState label="Loading tickets…" />}
       {status === "error" && <p className="text-danger">Unable to load the queue.</p>}
       {status === "empty" && <p>No tickets in the queue yet.</p>}
       {status === "no-results" && <p>No tickets match your search or filters.</p>}
