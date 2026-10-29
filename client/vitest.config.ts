@@ -5,5 +5,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./tests/setup.ts",
     globals: true,
+    // jsdom workers are memory-hungry; the default (one per CPU core) froze a 16 GB laptop
+    maxWorkers: 2,
+    minWorkers: 1,
   },
 });

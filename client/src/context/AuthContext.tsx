@@ -17,8 +17,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const data = await apiGet<User>("/auth/me");
-      setUser(data);
+      // /auth/session answers 200 { user: null } when signed out, so no 401 shows up in the console
+      const data = await apiGet<{ user: User | null }>("/auth/session");
+      setUser(data.user);
     } catch {
       setUser(null);
     }

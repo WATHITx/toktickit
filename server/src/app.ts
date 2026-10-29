@@ -10,6 +10,8 @@ import staffTicketsRouter from "./routes/staffTickets.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import ticketsRouter from "./routes/tickets.js";
 import adminUsersRouter from "./routes/adminUsers.js";
+import actionsTakenRouter from "./routes/actionsTaken.js";
+import dashboardRouter from "./routes/dashboard.js";
 
 // getPrisma() is your lazy database handle. Call it INSIDE a route when you
 // need the DB (Issue 4). It is intentionally unused until then.
@@ -29,6 +31,8 @@ app.use("/api", ticketsRouter);
 app.use("/api", attachmentsRouter);
 app.use("/api", staffTicketsRouter);
 app.use("/api", adminUsersRouter);
+app.use("/api", actionsTakenRouter);
+app.use("/api", dashboardRouter);
 app.use(errorHandler);
 
 

@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiGet } from "../api/client";
 import AppShell from "../components/shell/AppShell";
+import { LoadingState } from "../components/PageStates";
 
 type Ticket = {
   id: number; ticketNumber: string; summary: string;
@@ -15,15 +16,18 @@ const PAGE_SIZE = 10;
 
 export default function StaffTicketQueue() {
   const navigate = useNavigate();
+  // Filters start from the URL so dashboard drill-down links open the filtered queue (FR-16)
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [priorityFilter, setPriorityFilter] = useState("");
-  const [ownership, setOwnership] = useState("all");
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "");
+  const [priorityFilter, setPriorityFilter] = useState(searchParams.get("itPriority") ?? "");
+  const [ownership, setOwnership] = useState(searchParams.get("ownership") ?? "all");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [status, setStatus] = useState<Status>("loading");
   const [hasAnyEver, setHasAnyEver] = useState(false);
 
@@ -37,9 +41,10 @@ export default function StaffTicketQueue() {
       if (statusFilter) params.set("status", statusFilter);
       if (priorityFilter) params.set("itPriority", priorityFilter);
 
-      const result = await apiGet<{ data: Ticket[]; pagination: { totalPages: number } }>(`/staff/tickets?${params}`);
+      const result = await apiGet<{ data: Ticket[]; pagination: { totalPages: number; total?: number } }>(`/staff/tickets?${params}`);
       setTickets(result.data);
       setTotalPages(result.pagination.totalPages);
+      setTotal(result.pagination.total ?? result.data.length);
 
       if (result.data.length > 0) {
         setHasAnyEver(true);
@@ -56,6 +61,16 @@ export default function StaffTicketQueue() {
 
   useEffect(() => { fetchQueue(); }, [fetchQueue]);
   useEffect(() => { setPage(1); }, [search, statusFilter, priorityFilter, ownership]);
+
+  // Keep the URL in sync so Back and shared links return to the same view
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (search) next.set("search", search);
+    if (statusFilter) next.set("status", statusFilter);
+    if (priorityFilter) next.set("itPriority", priorityFilter);
+    if (ownership !== "all") next.set("ownership", ownership);
+    setSearchParams(next, { replace: true });
+  }, [search, statusFilter, priorityFilter, ownership, setSearchParams]);
 
   const clearFilters = () => {
     setSearch(""); setStatusFilter(""); setPriorityFilter(""); setOwnership("all");
@@ -82,12 +97,15 @@ export default function StaffTicketQueue() {
         <div className="col-12 col-md-4 col-lg-2">
           <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">All Statuses</option>
+            <option value="ACTIVE">All open (active)</option>
             <option value="NEW">New</option>
             <option value="OPEN">Open</option>
             <option value="IN_PROGRESS">In Progress</option>
             <option value="WAITING_FOR_REQUESTER">Waiting for Requester</option>
             <option value="RESOLVED">Resolved</option>
             <option value="CLOSED">Closed</option>
+            <option value="REOPENED">Reopened</option>
+            <option value="CANCELLED">Cancelled</option>
           </select>
         </div>
         <div className="col-12 col-md-4 col-lg-2">
@@ -107,11 +125,16 @@ export default function StaffTicketQueue() {
         </div>
       </div>
 
-      {status === "loading" && <p>⏳ loading...</p>}
+      {status === "loading" && <LoadingState label="Loading tickets…" />}
       {status === "error" && <p className="text-danger">Unable to load the queue.</p>}
       {status === "empty" && <p>No tickets in the queue yet.</p>}
       {status === "no-results" && <p>No tickets match your search or filters.</p>}
 
+      {status === "loaded" && (
+        <p className="text-muted small mb-2" data-testid="result-count" aria-live="polite">
+          {total} {total === 1 ? "ticket" : "tickets"}
+        </p>
+      )}
       {status === "loaded" && (
         <>
           <div className="table-responsive d-none d-lg-block">

@@ -28,7 +28,7 @@ export default function ChangePassword() {
     try {
       await apiPost("/auth/change-password", { currentPassword, newPassword });
       await refreshUser();
-      navigate("/my-tickets");
+      navigate("/dashboard");
     } catch (err: any) {
       setErrorMsg(err.message || "Unable to change password");
       setStatus("error");
@@ -63,7 +63,7 @@ export default function ChangePassword() {
 
         <button type="submit" className="btn btn-primary w-100 mt-4"
           disabled={!allRulesPass || !passwordsMatch || status === "submitting"}>
-          {status === "submitting" ? "Saving…" : "Continue"}
+          {status === "submitting" ? "Savingâ€¦" : "Continue"}
         </button>
       </form>
     </div>

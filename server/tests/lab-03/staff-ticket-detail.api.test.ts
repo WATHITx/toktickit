@@ -53,7 +53,9 @@ describe("IT Staff Ticket Detail operations", () => {
   });
 
   it("allows a valid status transition NEW to OPEN", async () => {
-    const res = await staffAgent.patch(`/api/staff/tickets/${ticketId}/status`).send({ status: "OPEN" });
+    // Lab 4 (BR-17): status changes must carry the version the client last saw
+    const { version } = (await staffAgent.get(`/api/staff/tickets/${ticketId}`)).body;
+    const res = await staffAgent.patch(`/api/staff/tickets/${ticketId}/status`).send({ status: "OPEN", expectedVersion: version });
     expect(res.status).toBe(200);
     expect(res.body.currentStatus).toBe("OPEN");
   });

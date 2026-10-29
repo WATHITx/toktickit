@@ -32,7 +32,8 @@ describe("Requester ownership from authenticated identity", () => {
 
   it("does not return another Requester's ticket even if ID is guessed (AC-03)", async () => {
     const prisma = getPrisma();
-    const otherUser = await prisma.user.findFirst({ where: { email: { not: "jennifer.a@toktickit.test" }, isActive: true, role: "REQUESTER" } });
+    // A fixed second Requester; picking "any other Requester" could land on the Lab 4 zero-state demo accounts
+    const otherUser = await prisma.user.findUnique({ where: { email: "sarah.j@toktickit.test" } });
     const otherAgent = request.agent(app);
     await otherAgent.post("/api/auth/login").send({ email: otherUser!.email, password: "DevPass!123" });
     const category = await prisma.category.findFirst();

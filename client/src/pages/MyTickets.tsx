@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiGet } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import AppShell from "../components/shell/s";
+import AppShell from "../components/shell/AppShell";
+import { LoadingState } from "../components/PageStates";
 
 type Ticket = {
   id: number; ticketNumber: string; summary: string;
@@ -18,16 +19,19 @@ export default function MyTickets() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Filters start from the URL so dashboard drill-down links open the filtered list (FR-16)
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [search, setSearch] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [priority, setPriority] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [categoryId, setCategoryId] = useState(searchParams.get("categoryId") ?? "");
+  const [priority, setPriority] = useState(searchParams.get("requestedPriority") ?? "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [status, setStatus] = useState<Status>("loading");
   const [hasAnyTicketsEver, setHasAnyTicketsEver] = useState(false);
 
@@ -49,9 +53,10 @@ export default function MyTickets() {
       if (priority) params.set("requestedPriority", priority);
       if (statusFilter) params.set("status", statusFilter);
 
-      const result = await apiGet<{ data: Ticket[]; pagination: { totalPages: number } }>(`/tickets?${params}`);
+      const result = await apiGet<{ data: Ticket[]; pagination: { totalPages: number; total?: number } }>(`/tickets?${params}`);
       setTickets(result.data);
       setTotalPages(result.pagination.totalPages);
+      setTotal(result.pagination.total ?? result.data.length);
 
       if (result.data.length > 0) {
         setHasAnyTicketsEver(true);
@@ -73,6 +78,16 @@ export default function MyTickets() {
 
   // รีเซ็ตกลับหน้า 1 ทุกครั้งที่เปลี่ยน filter/search
   useEffect(() => { setPage(1); }, [search, categoryId, priority, statusFilter]);
+
+  // Keep the URL in sync so Back and shared links return to the same view
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (search) next.set("search", search);
+    if (categoryId) next.set("categoryId", categoryId);
+    if (priority) next.set("requestedPriority", priority);
+    if (statusFilter) next.set("status", statusFilter);
+    setSearchParams(next, { replace: true });
+  }, [search, categoryId, priority, statusFilter, setSearchParams]);
 
   const clearFilters = () => {
     setSearch(""); setCategoryId(""); setPriority(""); setStatusFilter("");
@@ -120,14 +135,23 @@ export default function MyTickets() {
           </select>
         </div>
         <div className="col-md-3">
-          <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <select className="form-select" aria-label="Filter by status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">All Statuses</option>
+            <option value="ACTIVE">All open (active)</option>
+            <option value="RECENTLY_RESOLVED">Resolved in the last 7 days</option>
             <option value="NEW">New</option>
+            <option value="OPEN">Open</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="WAITING_FOR_REQUESTER">Waiting for Requester</option>
+            <option value="RESOLVED">Resolved</option>
+            <option value="CLOSED">Closed</option>
+            <option value="REOPENED">Reopened</option>
+            <option value="CANCELLED">Cancelled</option>
           </select>
         </div>
       </div>
 
-      {status === "loading" && <p>⏳ loading...</p>}
+      {status === "loading" && <LoadingState label="Loading tickets…" />}
       {status === "error" && <p className="text-danger">Unable to load tickets.</p>}
       {status === "empty" && (
         <div className="alert alert-secondary">
@@ -140,6 +164,11 @@ export default function MyTickets() {
         </div>
       )}
 
+      {status === "loaded" && (
+        <p className="text-muted small mb-2" data-testid="result-count" aria-live="polite">
+          {total} {total === 1 ? "ticket" : "tickets"}
+        </p>
+      )}
       {status === "loaded" && (
         <>
           {/* Desktop: table */}

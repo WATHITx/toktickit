@@ -19,7 +19,7 @@ export default function Login() {
     try {
       const result = await apiPost<{ mustChangePassword: boolean }>("/auth/login", { email, password });
       await refreshUser();
-      navigate(result.mustChangePassword ? "/change-password" : "/my-tickets");
+      navigate(result.mustChangePassword ? "/change-password" : "/dashboard");
     } catch {
       setStatus("error");
     }
@@ -49,7 +49,7 @@ export default function Login() {
         )}
 
         <button type="submit" className="btn btn-primary w-100 mt-4" disabled={status === "submitting"}>
-          {status === "submitting" ? "Signing in…" : "Sign In"}
+          {status === "submitting" ? "Signing inâ€¦" : "Sign In"}
         </button>
       </form>
     </div>

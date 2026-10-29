@@ -10,6 +10,9 @@ import SystemStatusWidget from "./components/SystemStatusWidget";
 import StaffTicketQueue from "./pages/StaffTicketQueue";
 import StaffTicketDetail from "./pages/StaffTicketDetail";
 import UserManagement from "./pages/UserManagement";
+import Dashboard from "./pages/Dashboard";
+import AppShell from "./components/shell/AppShell";
+import { NotFoundMessage } from "./components/PageStates";
 
 function App() {
   return (
@@ -22,7 +25,8 @@ function App() {
           <Route path="/create-ticket" element={<ProtectedRoute><CreateTicket /></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
           <Route path="/system-status" element={<SystemStatusWidget />} />
-          <Route path="/" element={<Navigate to="/my-tickets" replace />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route
   path="/my-queue"
   element={
@@ -47,6 +51,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="*" element={<ProtectedRoute><AppShell><NotFoundMessage /></AppShell></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

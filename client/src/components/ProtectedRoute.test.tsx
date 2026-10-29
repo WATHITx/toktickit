@@ -32,10 +32,12 @@ describe("ProtectedRoute", () => {
     expect(screen.getByText("login screen")).toBeInTheDocument();
   });
 
-  it("redirects a user whose role is not allowed", () => {
+  it("shows a Forbidden screen to a signed-in user whose role is not allowed (Lab 4 FR-20)", () => {
     renderAt(requester, ["ADMINISTRATOR"]);
-    expect(screen.getByText("login screen")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /you don't have access/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to Dashboard" })).toHaveAttribute("href", "/dashboard");
     expect(screen.queryByText("secret content")).not.toBeInTheDocument();
+    expect(screen.queryByText("login screen")).not.toBeInTheDocument();
   });
 
   it("renders the page for an allowed role", () => {

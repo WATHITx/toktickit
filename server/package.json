@@ -21,8 +21,7 @@
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.3",
-    "multer": "^2.3.0",
-    "seed": "ts-node prisma/seed.ts"
+    "multer": "^2.3.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

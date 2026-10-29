@@ -7,8 +7,12 @@ const VIEWPORTS = {
   mobile: { width: 375, height: 812 },
 };
 
-// Lab 3 replaced the development requester selector with real login
-const loginAsRequester = (page: any) => loginAs(page, TEST_USERS.requester);
+// Lab 3 replaced the development requester selector with real login; Lab 4 lands on /dashboard
+const loginAsRequester = async (page: any) => {
+  await loginAs(page, TEST_USERS.requester);
+  await page.goto("/my-tickets");
+  await page.getByTestId("result-count").waitFor();
+};
 
 for (const [name, size] of Object.entries(VIEWPORTS)) {
   test(`Create Ticket screenshot — ${name}`, async ({ page }) => {
